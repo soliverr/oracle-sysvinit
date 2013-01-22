@@ -1,0 +1,88 @@
+#! /bin/bash
+#
+# Base functions to support Oracle Listener services.
+#
+# $Id$
+#
+
+source /lib/lsb/oracle-base-functions || exit 1
+
+#
+# Functions --------------------------------------------------
+#
+
+# Get Listeners names
+#
+oracle_listener_cat_lsnr() {
+    local dir
+
+    oracle_env
+
+    dir=${TNS_ADMIN:-$ORACLE_HOME/network/admin}
+
+    oracle_debug "$FUNCNAME: TNS_ADMIN dir = $dir"
+  
+    [ -r $dir/listener.ora ] && cat $dir/listener.ora | \
+    sed -e 's/[[:space:]]\+//g;/^$\|^#/d' | sed -e :a -e '$!N;s/\n(/(/;ta' -e 'P;D' | \
+    grep ADDRESS | sed -n -e 's/\(^[[:alnum:]][^=]\+\)=.*/\1/p'
+}
+
+# Check for Oracle Restart resource
+#   oracle_rdbms_is_oracle_restart_resource
+#
+oracle_listener_is_oracle_restart_resource() {
+    local lsn=`echo $1 | tr [:lower:] [:upper:]`
+    local enabled=
+    
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$lsn" ] && oracle_error "No LISTENER parameter" && return $ORACLE_ERROR
+    
+    [ ! -x $ORACLE_HOME/bin/srvctl ] && oracle_error "Can't execute $ORACLE_HOME/bin/srvctl" && return $ORACLE_ERROR
+
+    $ORACLE_HOME/bin/srvctl status listener -l $lsn 2>&1 | grep -q -s "^Listener $lsn is enabled"
+    enabled=$?
+
+    [ $enabled -eq 0 ] && return $ORACLE_OKAY || return $ORACLE_ERROR
+}
+
+
+# Control for Oracle Listener
+#   oracle_listener_lsnrctl command listener
+#
+oracle_listener_lsnrctl() {
+    local cmd=$1
+    local lsn=$2
+    local rc=1
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+    [ -z "$cmd" ] && (oracle_debug "$FUNCNAME: No command to execute"; return $ORACLE_ERROR)
+
+    oracle_env
+
+    if [ ! -x $ORACLE_HOME/bin/lsnrctl ] ; then
+        oracle_error "Can't execute $ORACLE_HOME/bin/lsnrctl"
+        return $ORACLE_ERROR
+    fi
+
+    if [ "$(id -nu 2>&-)" = "$ORA_OWNER" ] ; then
+        LSNRCTL="${ORACLE_HOME}/bin/lsnrctl"
+    else
+        LSNRCTL="su $ORA_OWNER --preserve-environment --command ${ORACLE_HOME}/bin/lsnrctl"
+    fi
+    oracle_debug "$FUNCNAME: $LSNRCTL"
+    oracle_debug "$FUNCNAME: run: $cmd $lsn"
+
+    $LSNRCTL <<EOF
+$cmd $lsn
+EOF
+    rc=$?
+
+    if oracle_listener_is_oracle_restart_resource $lsn ; then
+        oracle_error "Listener $lsn is an Oracle Restart resource"
+    fi
+
+    oracle_debug "$FUNCNAME: RC=$rc"
+    return $rc
+}
+

@@ -1,0 +1,260 @@
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle dbConsole service
+#
+# $Id$
+#
+
+### BEGIN INIT INFO
+# Provides:          oracle-dbconsole
+# Required-Start:    oracle-rdbms
+# Required-Stop:     oracle-rdbms
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Oracle dbConsole standalone service
+# Description:       Start Oracle dbConsole standalone service
+#                    for Oracle RDBMS 10g and higher.
+### END INIT INFO
+
+# chkconfig: 345 97 23
+# description: Startup/Shutdown Oracle dbConsole
+#
+# Usage:
+#          start | stop | status
+#          dbconsole command [sid]
+#
+
+source /lib/lsb/oracle-dbconsole-functions
+source /lib/lsb/oracle-rdbms-functions
+
+SLOGFILE=@logdir@/oraclelog
+ORA_OWNER="oracle"
+rc=$ORACLE_OKAY
+
+export ORA_OWNER
+
+echo >> $SLOGFILE
+echo "I: $0: `date '+%F %T'`: Run command $* " >> $SLOGFILE
+
+oracle_dbconsole_usage() {
+    cat << __EOFF__
+ Usage: 
+   $0 start | stop | status [sid]
+   $0 dbconsole command  [sid]
+ 
+ Control Oracle dbConsole standalone service.
+
+ Arguments:
+    start  [sid]  - Start Oracle dbConsole for Oracle RDBMS sid (default - all)
+    stop   [sid]  - Stop Oracle dbConsole for Oracle RDBMS sid (default - all)
+    status [sid]  - Check status of Oracle dbConsole for Oracle RDBMS sid (default - all)
+            sid   - ORACLE SID
+
+    dbconsole command [sid]
+       command  - Command to execute by Oracle dbConsole service for Oracle RDBMS sid
+                  (default - all)
+                  Command is any available command for Oracle dbConsole service
+__EOFF__
+}
+
+# Usage
+#  dbconsole command [sid]
+oracle_dbconsole() {
+    local cmd=$1
+    local sid=$2
+    local rc=0
+    local rrc=0
+    local str
+
+    echo "I: === oracle_dbconsole $* " >> $SLOGFILE
+
+    [ "$sid" = "normal" -o "$sid" = "immediate" -o "$sid" = "abort" ] && sid=
+
+    case "$cmd" in
+      start)
+         if [ "$sid" = "all" -o "$sid" = "ALL" ] ; then
+            oracle_rdbms_sids | { while read sid ; do
+                [ -z "$sid" ] && continue
+                echo -n "Start dbConsole for Oracle RDBMS $sid: " | tee -a $SLOGFILE
+                case "$(oracle_cfg DATABASE_ROLE)" in
+                    PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "" "dbconsole" >> $SLOGFILE 2>&1
+                                         rc=$?
+                    ;;
+                    * ) rc=$ORACLE_PASS ;;
+                esac
+                case $rc in
+                    $ORACLE_OKAY ) str="OK" ;;
+                    $ORACLE_PASS ) str="PASS" ;;
+                    * ) str="Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+         else
+            [ -z "$sid" ] && sid=`oracle_get_default_sid`
+            echo -n "Start dbConsole for given Oracle RDBMS $sid: " | tee -a $SLOGFILE
+            case "$(oracle_cfg DATABASE_ROLE)" in
+                PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "" "dbconsole" >> $SLOGFILE 2>&1
+                                     rc=$?
+                ;;
+                * ) rc=$ORACLE_PASS ;;
+            esac
+            case $rc in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+         fi
+      ;;
+      stop|abort|clean)
+         if [ "$sid" = "all" -o "$sid" = "ALL" ] ; then
+            oracle_rdbms_sids | { while read sid ; do
+                [ -z "$sid" ] && continue
+                echo -n "Stop dbConsole for Oracle RDBMS $sid: " | tee -a $SLOGFILE
+                case "$(oracle_cfg DATABASE_ROLE)" in
+                    PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "" "dbconsole" >> $SLOGFILE 2>&1
+                                         rc=$?
+                    ;;
+                    * ) rc=$ORACLE_PASS ;;
+                esac
+                case $rc in
+                    $ORACLE_OKAY ) str="OK" ;;
+                    $ORACLE_PASS ) str="PASS" ;;
+                    * ) str="Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+           done
+           exit $rrc
+           }
+           rrc=$?
+         else
+            [ -z "$sid" ] && sid=`oracle_get_default_sid`
+            echo -n "Stop dbConsole for given Oracle Oracle RDBMS $sid: " | tee -a $SLOGFILE
+            case "$(oracle_cfg DATABASE_ROLE)" in
+                PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "" "dbconsole" >> $SLOGFILE 2>&1
+                                     rc=$?
+                ;;
+                * ) rc=$ORACLE_PASS ;;
+            esac
+            case $rc in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+         fi
+      ;;
+      status|check)
+         if [ "$sid" = "all" -o "$sid" = "ALL" ] ; then
+            oracle_rdbms_sids --force | { while read sid ; do
+                [ -z "$sid" ] && continue
+                echo "Status dbConsole for Oracle RDBMS $sid: " | tee -a $SLOGFILE
+                case "$(oracle_cfg DATABASE_ROLE)" in
+                    PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "--force" "dbconsole" | tee -a $SLOGFILE 2>&1
+                                         rc=$?
+                    ;;
+                    * ) rc=$ORACLE_PASS ;;
+                esac
+                case $rc in
+                    $ORACLE_OKAY ) str="Status dbConsole for Oracle RDBMS $sid: OK" ;;
+                    $ORACLE_PASS ) str="Status dbConsole for Oracle RDBMS $sid: PASS" ;;
+                    * ) str="Status dbConsole for Oracle RDBMS $sid: Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo "$str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+         else
+            [ -z "$sid" ] && sid=`oracle_get_default_sid`
+            echo "Status dbConsole for given Oracle RDBMS $sid: " | tee -a $SLOGFILE
+            case "$(oracle_cfg DATABASE_ROLE)" in
+                PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "--force" "dbconsole" | tee -a $SLOGFILE 2>&1
+                                     rc=$?
+                ;;
+                * ) rc=$ORACLE_PASS ;;
+            esac
+            case $rc in
+                $ORACLE_OKAY ) str="Status dbConsole for given Oracle RDBMS $sid: OK" ;;
+                $ORACLE_PASS ) str="Status dbConsole for given Oracle RDBMS $sid: PASS" ;;
+                * ) str="Status dbConsole for given Oracle RDBMS $sid: Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo "$str" | tee -a $SLOGFILE
+          fi
+      ;;
+      *)
+         shift 2
+         if [ "$sid" = "all" -o "$sid" = "ALL" ] ; then
+            oracle_rdbms_sids | { while read sid ; do
+                [ -z "$sid" ] && continue
+                echo "Run command '$cmd' in dbConsole for Oracle RDBMS $sid: " | tee -a $SLOGFILE
+                case "$(oracle_cfg DATABASE_ROLE)" in
+                    PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "" "$@" 2>&1 | tee -a $SLOGFILE
+                                         rc=$?
+                    ;;
+                    * ) rc=$ORACLE_PASS ;;
+                esac
+                case $rc in
+                    $ORACLE_OKAY ) str="Run command '$cmd' in dbConsole for Oracle RDBMS $sid: OK" ;;
+                    $ORACLE_PASS ) str="Run command '$cmd' in dbConsole for Oracle RDBMS $sid: PASS" ;;
+                    * ) str="Run command '$cmd' in dbConsole for Oracle RDBMS $sid: Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+        else
+            echo "Run command '$cmd' in dbConsole for given Oracle RDBMS $sid: " | tee -a $SLOGFILE
+            case "$(oracle_cfg DATABASE_ROLE)" in
+                PRIMARY|primary|'' ) oracle_dbconsole_command "$sid" "$cmd" "" "$@" 2>&1 | tee -a $SLOGFILE
+                                     rc=$?
+                ;;
+                * ) rc=$ORACLE_PASS ;;
+            esac
+            case $rc in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        fi
+      ;;
+    esac
+
+    return $rrc
+}
+
+case "$1" in
+    start)
+        oracle_dbconsole $@ all
+        rc=$?
+    ;;
+    stop)
+        oracle_dbconsole $@ all
+        rc=$?
+    ;;
+    status)
+        oracle_dbconsole $@ all
+        rc=$?
+    ;;
+    dbconsole)
+        shift
+        oracle_dbconsole $@
+        rc=$?
+    ;;
+    help)
+        oracle_dbconsole_usage
+    ;;
+    *)
+        oracle_dbconsole_usage
+        rc=$ORACLE_ERROR
+esac
+
+echo "" >> $SLOGFILE
+
+exit $rc
+

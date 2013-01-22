@@ -1,0 +1,120 @@
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle ASM standalone RDBMS
+#
+# $Id$
+#
+
+### BEGIN INIT INFO
+# Provides:          oracle-asm
+# Required-Start:    $local_fs time network
+# Required-Stop:     $null
+# X-Start-Before:    oracle-rdbms
+# X-Stop-After:      oracle-rdbms
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Oracle ASM 
+# Description:       Start Oracle ASM standalone RDBMS,
+#                    configured in /etc/oratab file (+ASM).
+### END INIT INFO
+
+# chkconfig: 345 90 40
+# description: Startup/Shutdown Oracle ASM RDBMS
+#
+# Usage:
+#          start | stop | status
+
+source /lib/lsb/oracle-asm-functions
+
+SLOGFILE=@logdir@/oraclelog
+ORA_OWNER="oracle"
+rc=$ORACLE_OKAY
+
+sid=${2:-""}
+mode=${3:-""}
+
+export ORA_OWNER
+
+echo >> $SLOGFILE
+echo "I: $0: `date '+%F %T'`: Run command $* " >> $SLOGFILE
+
+oracle_asm_usage() {
+    cat << __EOFF__
+ Usage: 
+   $0 start | stop | status
+ 
+ Control Oracle ASM standalone RDBMS instances.
+
+ Arguments:
+   start [sid] [mode] - Start primary Oracle RDBMS with sid or default
+                mode  - nomount | mount
+   stop  [sid] [mode] - Stop primary Oracle RDBMS with sid or default
+                mode  - immediate | normal | abort 
+                        (default stop is immediate)
+                sid   - ORACLE SID (default is +ASM)
+   status [sid]       - Show status for Oracle RDBMS with sid or default
+__EOFF__
+}
+
+
+case "$1" in
+    start)
+        [ -z "$sid" ] && sid=`oracle_asm_get_default_sid`
+        if [ -n "$sid" ] ; then
+            echo -n "Start given Oracle ASM $sid: " | tee -a $SLOGFILE
+            oracle_asm_dbstart "$sid" "$mode" >> $SLOGFILE 2>&1
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rc=$((10+rc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        else
+            echo "No default ASM to start in $ORATAB" | tee -a $SLOGFILE
+            rc=$ORACLE_NOSID
+        fi
+    ;;
+    stop)
+        [ -z "$sid" ] && sid=`oracle_asm_get_default_sid`
+        if [ -n "$sid" ] ; then
+            echo -n "Stop given Oracle ASM $sid: " | tee -a $SLOGFILE
+            oracle_asm_dbshut "$sid" "$mode" >> $SLOGFILE 2>&1
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rc=$((10+rc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        else
+            echo "No default ASM to stop in $ORATAB" | tee -a $SLOGFILE
+            rc=$ORACLE_NOSID
+        fi
+     ;;
+    status)
+        [ -z "$sid" ] && sid=`oracle_asm_get_default_sid`
+        if [ -n "$sid" ] ; then
+            echo "Status for given Oracle ASM $sid: " | tee -a $SLOGFILE
+            oracle_asm_dbstatus "$sid" "$mode" 2>&1 | tee -a $SLOGFILE 
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rc=$((10+rc+1))  ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        else
+            echo "No default ASM in $ORATAB" | tee -a $SLOGFILE
+            rc=$ORACLE_NOSID
+        fi
+     ;;
+    help)
+        oracle_asm_usage
+    ;;
+    *)
+        oracle_asm_usage
+        rc=$ORACLE_ERROR
+esac
+
+echo >> $SLOGFILE
+
+exit $rc
+

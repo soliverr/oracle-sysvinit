@@ -1,0 +1,15 @@
+# TNSaliases for Oracle
+#
+# $Id$
+
+
+local = (DESCRIPTION =
+  (ADDRESS=(PROTOCOL=ipc)(KEY=@hostname@))
+  (CONNECT_DATA=(SID = @sid@)(SERVER = DEDICATED))
+)
+
+local_tcp = (DESCRIPTION =
+  (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
+  (CONNECT_DATA=(SID = @sid@)(SERVER = DEDICATED))
+)
+

@@ -1,0 +1,217 @@
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle Instance and Listener
+#
+# $Id$
+#
+
+### BEGIN INIT INFO
+# Provides:          oracle-listener
+# Required-Start:    $local_fs time network 
+# Required-Stop:     $null
+# X-Start-Before:    oracle-asm oracle-rdbms
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Oracle Listener services
+# Description:       Start all Oracle listeners, configured 
+#                    in $TNS_ADMIN/listener.ora file.
+### END INIT INFO
+
+# chkconfig: 345 85 25
+# description: Startup/Shutdown Oracle Listener services
+#
+# Usage:
+#          start | stop | status
+#          listener command [listener_name | all]
+#
+
+source /lib/lsb/oracle-listener-functions
+
+SLOGFILE=@logdir@/oraclelog
+ORA_OWNER="oracle"
+rc=$ORACLE_OKAY
+
+export ORA_OWNER
+
+echo >> $SLOGFILE
+echo "I: $0: `date '+%F %T'`: Run command $* " >> $SLOGFILE
+
+oracle_listener_usage() {
+    cat << __EOFF__
+ Usage: 
+   $0 start | stop | status [listener_name | all]
+   $0 listener command  [listener_name | all]
+ 
+ Control Oracle Listener services.
+
+ Arguments:
+    start  [listener_name | all]  - Start Oracle Listener service (default - all)
+    stop   [listener_name | all]  - Stop Oracle Listener service (default - all)
+    status [listener_name | all]  - Check status of Oracle Listener service (default - all)
+                   istener_name   - Name of Listener service to proceed
+                            all   - Proceed all Listener services in \$TNS_ADMIN/listener.ora file
+
+    listener command [listener_name | all]
+       command  - Command to execute by Oracle Listener service listener_name (default - all)
+                  Command is any available command for Oracle Listener service
+__EOFF__
+}
+
+# Usage
+#  oracle_listener command listener_name
+#
+oracle_listener() {
+    local cmd="$1"
+    local lsn="${2}"
+    local rc=0
+    local rrc=0
+    local str
+
+    [ "$lsn" = "normal" -o "$lsn" = "immediate" -o "$lsn" = "abort" ] && lsn=
+
+    echo "I: === oracle_listener $* " >> $SLOGFILE
+
+    case "$cmd" in
+     start)
+        if [ "$lsn" = "all" -o "$lsn" = "ALL" ] ; then
+            oracle_listener_cat_lsnr | { while read lsn ; do
+                echo -n "Start Oracle Listener service $lsn: " | tee -a $SLOGFILE
+                oracle_listener_lsnrctl "$cmd" "$lsn" >> $SLOGFILE 2>&1
+                case ${PIPESTATUS[0]} in
+                    $ORACLE_OKAY ) str="OK" ;;
+                    $ORACLE_PASS ) str="PASS" ;;
+                    * ) str="Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+        else
+            echo -n "Start given Oracle Listener $lsn: " | tee -a $SLOGFILE
+            oracle_listener_lsnrctl "$cmd" "$lsn" >> $SLOGFILE 2>&1
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        fi
+      ;;
+      stop)
+        if [ "$lsn" = "all" -o "$lsn" = "ALL" ] ; then
+            oracle_listener_cat_lsnr | { while read lsn ; do
+                echo -n "Stop Oracle Listener service $lsn: " | tee -a $SLOGFILE
+                oracle_listener_lsnrctl "$cmd" "$lsn" >> $SLOGFILE 2>&1
+                case ${PIPESTATUS[0]} in
+                    $ORACLE_OKAY ) str="OK" ;;
+                    $ORACLE_PASS ) str="PASS" ;;
+                    * ) str="Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+        else
+            echo -n "Stop given Oracle Listener service $lsn: " | tee -a $SLOGFILE
+            oracle_listener_lsnrctl "$cmd" "$lsn" >> $SLOGFILE 2>&1
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        fi
+      ;;
+      status)
+        if [ "$lsn" = "all" -o "$lsn" = "ALL" ] ; then
+            local cnt=`ps -ef | grep tnslsnr | grep -v grep | wc -l`
+            echo "Running Oracle Listener services: $cnt"  | tee -a $SLOGFILE
+            oracle_listener_cat_lsnr | { while read lsn ; do
+                echo -n "Status Oracle Listener service $lsn: " | tee -a $SLOGFILE
+                str=`oracle_listener_lsnrctl "$cmd" "$lsn" 2>&1 | tee -a $SLOGFILE | sed -ne 's/.*\(Listener.*is an Oracle Restart resource\).*/\1/p'`
+                oracle_listener_lsnrctl "$cmd" "$lsn" 1>/dev/null 2>&1
+                case ${PIPESTATUS[0]} in
+                    $ORACLE_OKAY ) str="OK $str" ;;
+                    $ORACLE_PASS ) str="PASS $str" ;;
+                    * ) str="Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+        else
+            echo -n "Status given Oracle Listener service $lsn: " | tee -a $SLOGFILE
+            str=`oracle_listener_lsnrctl "$cmd" "$lsn" 2>&1 | tee -a $SLOGFILE | sed -ne 's/.*\(Listener.*is an Oracle Restart resource\).*/\1/p'`
+            oracle_listener_lsnrctl "$cmd" "$lsn" 1>/dev/null 2>&1
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK $str" ;;
+                $ORACLE_PASS ) str="PASS $str" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        fi
+      ;;
+      *)
+        if [ "$lsn" = "all" -o "$lsn" = "ALL" ] ; then
+            oracle_listener_cat_lsnr | { while read lsn ; do
+                echo -n "Run command '$cmd' for Oracle Listener service $lsn: " | tee -a $SLOGFILE
+                oracle_listener_lsnrctl "$cmd" "$lsn" 2>&1 | tee -a $SLOGFILE
+                case ${PIPESTATUS[0]} in
+                    $ORACLE_OKAY ) str="OK" ;;
+                    $ORACLE_PASS ) str="PASS" ;;
+                    * ) str="Error"; rrc=$((10+rrc+1)) ;;
+                esac
+                echo " $str" | tee -a $SLOGFILE
+            done
+            exit $rrc
+            }
+            rrc=$?
+        else
+            echo "Run command '$cmd' for given Oracle Listener service $lsn: " | tee -a $SLOGFILE
+            oracle_listener_lsnrctl "$cmd" "$lsn" 2>&1 | tee -a $SLOGFILE
+            case ${PIPESTATUS[0]} in
+                $ORACLE_OKAY ) str="OK" ;;
+                $ORACLE_PASS ) str="PASS" ;;
+                * ) str="Error"; rrc=$((10+rrc+1)) ;;
+            esac
+            echo " $str" | tee -a $SLOGFILE
+        fi
+      ;;
+    esac
+
+    return $rrc
+}
+
+case "$1" in
+    start)
+        oracle_listener $@ all
+        rc=$?
+    ;;
+    stop)
+        oracle_listener $@ all
+        rc=$?
+    ;;
+    status)
+        oracle_listener $@ all
+        rc=$?
+    ;;
+    listener)
+        shift
+        oracle_listener $@
+        rc=$?
+    ;;
+    help)
+        oracle_listener_usage
+    ;;
+    *)
+        oracle_listener_usage
+        rc=$ORACLE_ERROR
+esac
+
+echo >> $SLOGFILE
+
+exit $rc
+

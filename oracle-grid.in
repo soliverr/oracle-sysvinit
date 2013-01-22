@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle Grid Infrastructure
+#
+# $Id$
+#
+
+### BEGIN INIT INFO
+# Provides:          oracle-grid
+# Required-Start:    $local_fs time network
+# Required-Stop:     $null
+# X-Start-Before:    oracle-asm oracle-listener
+# X-Stop-After:      oracle-asm oracle-listener
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Oracle Grid
+# Description:       Start Oracle Grid services
+### END INIT INFO
+
+# chkconfig: 345 80 50
+# description: Startup/Shutdown Oracle Grid services
+#
+# Usage:
+#          start | stop | status
+
+source /lib/lsb/oracle-grid-functions
+
+SLOGFILE=@logdir@/oraclelog
+ORA_OWNER="oracle"
+rc=$ORACLE_OKAY
+
+export ORA_OWNER
+
+echo >> $SLOGFILE
+echo "I: $0: `date '+%F %T'`: Run command $* " >> $SLOGFILE
+
+oracle_grid_usage() {
+    cat << __EOFF__
+ Usage: 
+   $0 start | stop | status
+ 
+ Control Oracle Grid services.
+
+ Arguments:
+   start  - 
+   stop   - 
+   status - 
+__EOFF__
+}
+
+
+case "$1" in
+    start)
+    ;;
+    stop)
+    ;;
+    status)
+    ;;
+    help)
+        oracle_grid_usage
+    ;;
+    *)
+        oracle_grid_usage
+        rc=$ORACLE_ERROR
+esac
+
+echo >> $SLOGFILE
+
+exit $rc
+

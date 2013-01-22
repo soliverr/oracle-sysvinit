@@ -1,0 +1,7 @@
+oracle-sysvinit
+---------------
+
+Control Oracle services in common Linux way through /etc/init.d
+
+ -- Sergey Kryazhevskikh <soliverr@gmail.com>
+

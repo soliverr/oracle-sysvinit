@@ -1,0 +1,105 @@
+#! /bin/bash
+#
+# Base functions to support Oracle Restart Infrastructure.
+#
+# $Id$
+#
+
+source /lib/lsb/oracle-base-functions || exit 1
+
+# Delete /etc/init.d/ohasd from all run levels
+#   oracle_restart_remove_ohasd
+#
+oracle_restart_remove_ohasd() {
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    find /etc/rc?.d/ -name '*ohasd' -exec rm -fv {} ';' 2>&-
+}
+
+# Start Oracle Restart service
+#   oracle_restart_start
+oracle_restart_start() {
+    local mode rc
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+    
+    [ -r "$ORACONFIG" ] && . "$ORACONFIG"
+
+    mode=${ORACLE_RESTART_MODE:-NATIVE}
+    rc=0
+
+    mode=`echo $mode | tr [:lower:] [:upper:]`
+
+    case "$mode" in
+        NATIVE )
+            /etc/init.d/ohasd start
+            rc=$?
+        ;;
+        *)
+            rc=2
+        ;;
+    esac
+
+    return $rc
+}
+
+# Stop Oracle Restart service
+#   oracle_restart_stop
+oracle_restart_stop() {
+    local mode rc
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -r "$ORACONFIG" ] && . "$ORACONFIG"
+
+    mode=${ORACLE_RESTART_MODE:-NATIVE}
+    rc=0
+
+    mode=`echo $mode | tr [:lower:] [:upper:]`
+
+    case "$mode" in
+        NATIVE )
+            /etc/init.d/ohasd stop
+            rc=$?
+        ;;
+        *)
+            rc=2
+        ;;
+    esac
+
+    return $rc
+}
+
+# Status Oracle Restart service and resources
+#   oracle_restart_status
+oracle_restart_status() {
+    local pid sid ocssd str
+    
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -r "$ORACONFIG" ] && . "$ORACONFIG"
+
+    oracle_error "Oracle Restart (OHAS) services: "
+    for s in ohasd.bin ocssd.bin oraagent.bin evmd.bin evmlogger.bin cssdagent ; do
+        pid=`pgrep $s`
+        [ -n "$pid" ] && str="running ($pid)" || str="not running"
+        oracle_error " $s service is $str"
+        [ -n "$pid" -a "$s" = "ocssd.bin" ] && ocssd="$pid"
+    done
+
+    # Get ORACLE_HOME from ASM
+    sid=${ORACLE_ASM:-""}
+    [ -z "$sid" ] && sid=`oracle_cat_oratab --force | grep '^+' | cut -d ':' -f 1 | head -1`
+    
+    if [ -n "$sid" -a -n "$ocssd" ] ; then
+        oracle_env $sid --force
+        [ -x $ORACLE_HOME/bin/crsctl ] || return $ORACLE_PASS
+        oracle_error "Oracle Restart resources:"
+        $ORACLE_HOME/bin/crsctl status resource -t 
+    fi
+
+    return $ORACLE_OKAY
+}
+
+

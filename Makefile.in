@@ -1,0 +1,151 @@
+#
+# $Id$
+#
+
+SHELL           = /bin/bash
+INSTALL         = install
+top_srcdir      = @top_srcdir@
+srcdir          = @srcdir@
+VPATH           = @srcdir@
+
+# Package identification----------------------------------------------------------------
+PACKAGE_NAME    = @PACKAGE_NAME@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+PACKAGE_STRING  = @PACKAGE_STRING@
+
+# Base directories ----------------------------------------------------------------------
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+sbindir         = @sbindir@
+libdir          = @libdir@
+lsbdir          = @lsbdir@
+libexecdir      = @libexecdir@
+sysconfdir      = @sysconfdir@
+confdir         = @confdir@
+sectionconfdir  = $(confdir)/..
+localstatedir   = @localstatedir@
+datarootdir     = @datarootdir@
+datadir         = @datadir@
+logdir          = @logdir@
+pkglibexecdir   = @pkglibexecdir@
+docdir          = @docdir@
+
+# Dir to build package
+DESTDIR         =
+
+# Target distribution: REDHAT, DEBIAN
+DISTRIB         =
+
+# System directories
+ifeq ($(DISTRIB), REDHAT)
+INITD    = $(sysconfdir)/rc.d/init.d
+LIMITSD  = $(sysconfdir)/security/limits.d
+PROFILED = $(sysconfdir)/profile.d
+else ifeq ($(DISTRIB), DEBIAN)
+INITD    = $(sysconfdir)/init.d
+LIMITSD  = $(sysconfdir)/security/limits.d
+PROFILED = $(sysconfdir)/profile.d
+else
+INITD    = $(confdir)/init.d
+LIMITSD  = $(confdir)/security
+PROFILED = $(confdir)/profile.d
+endif
+
+.PHONY: expand
+.PHONY: install install-dirs install-base-dirs install-docs install-files install-logrotate install-config install-sql install-sh
+.PHONY: clean distclean mostlyclean
+
+install: expand install-dirs install-docs install-files
+
+expand:
+	chmod +x $(srcdir)/build_expand.sh
+	$(srcdir)/build_expand.sh _pkg-functions
+
+install-base-dirs:
+	# Создать базовые каталоги пакета
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(sysconfdir)
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(confdir)
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(logdir)
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(logdir)/archive
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(INITD)
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(PROFILED)
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(lsbdir)
+
+install-dirs: install-base-dirs
+	# Create package's dirs
+
+install-docs:
+	# Install documentation
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(docdir)
+	$(INSTALL) --mode 0644 README $(DESTDIR)$(docdir)
+	$(INSTALL) --mode 0644 limits.conf $(DESTDIR)$(docdir)
+	$(INSTALL) --mode 0644 listener.ora $(DESTDIR)$(docdir)
+	$(INSTALL) --mode 0644 sqlnet.ora $(DESTDIR)$(docdir)
+	$(INSTALL) --mode 0644 tnsnames.ora $(DESTDIR)$(docdir)
+	$(INSTALL) --mode 0644 sysctl.conf $(DESTDIR)$(docdir)
+
+install-files: install-config install-sql install-sh install-logrotate
+	# Install files
+	$(INSTALL) --mode 755 oracle-asm-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-base-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-dbconsole-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-grid-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-listener-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-rdbms-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-restart-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-asm $(DESTDIR)$(INITD)
+	$(INSTALL) --mode 755 oracle-dbconsole $(DESTDIR)$(INITD)
+	$(INSTALL) --mode 755 oracle-grid $(DESTDIR)$(INITD)
+	$(INSTALL) --mode 755 oracle-listener $(DESTDIR)$(INITD)
+	$(INSTALL) --mode 755 oracle-rdbms $(DESTDIR)$(INITD)
+	$(INSTALL) --mode 755 oracle-restart $(DESTDIR)$(INITD)
+	$(INSTALL) --mode 755 oracle $(DESTDIR)$(INITD)
+
+install-config:
+	# Install configs
+	$(INSTALL) --mode 644 oracle.conf $(DESTDIR)$(confdir)/oracle
+	$(INSTALL) --mode 755 ora_env.sh $(DESTDIR)$(PROFILED)
+	touch $(DESTDIR)$(PROFILED)/ora_env.sh
+
+install-sql:
+	# Install sql-files
+	for f in `ls *.sql 2>/dev/null` ; do \
+	  $(INSTALL) --mode 644 $$f $(DESTDIR)$(datadir) ; \
+	done
+
+install-sh:
+
+install-logrotate:
+	# Install logrotate configs
+	if [ -f logrotate.conf ] ; then \
+	    $(INSTALL) -D --mode 644 logrotate.conf $(DESTDIR)$(sysconfdir)/logrotate.d/$(PACKAGE_NAME).conf; \
+	fi
+
+clean:
+	fakeroot ./debian/rules clean
+
+distclean: clean
+	rm -fv logrotate.conf sqlnet.ora listener.ora oracle-*-functions _pkg-functions
+	rm -fv oracle oracle-asm oracle-dbconsole oracle-grid oracle-listener oracle-rdbms oracle-restart
+	rm -fv test.sh build_expand.sh
+	rm -f Makefile config.h config.status config.cache config.log
+	rm -rf autom4te.cache
+	find . -type f -iwholename '*~' -exec rm -fv {} ';'
+	if [ -d test ] ; then  rm -rf test ; fi
+	if [ -d REDHAT ] ; then rm -rf REDHAT ; fi
+	if [ -d DEBIAN ] ; then rm -rf DEBIAN ; fi
+
+mostlyclean: clean
+
+maintainer-clean: clean
+
+# automatic re-running of configure if the configure.ac file has changed
+${srcdir}/configure: configure.ac
+	cd ${srcdir} && autoconf
+
+Makefile: Makefile.in config.status
+	./config.status
+
+config.status: configure
+	./config.status --recheck

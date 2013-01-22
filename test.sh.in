@@ -1,0 +1,38 @@
+#! /bin/bash
+
+
+export ORACLE_TRACE=Debug
+source @lsbdir@/oracle-base-functions
+
+#oracle_start
+
+echo "=== GET DEFAULT SID =============="
+oracle_get_default_sid
+echo "=================================="
+echo ""
+
+echo "=== GET TNS_ADMIN ================"
+oracle_cfg TNS_ADMIN
+echo "=================================="
+echo ""
+
+echo "=== ORACLE ENV ==================="
+export -p | sed -e 's/declare -x \(.*\)/\1/' | grep 'ORA\|NLS\|TNS'
+oracle_env
+echo '========'
+export -p | sed -e 's/declare -x \(.*\)/\1/' | grep 'ORA\|NLS\|TNS'
+echo "=================================="
+echo ""
+
+#echo "RC: $?"
+
+#oracle_cat_oratab| grep -v '^\*' | cut -d ':' -f 1 
+
+#oracle_start ALL
+#oracle_stop ALL
+
+#oracle_dbstatus mts
+
+#oracle_cat_lsnr
+
+

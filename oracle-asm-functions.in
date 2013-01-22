@@ -1,0 +1,196 @@
+#! /bin/bash
+#
+# Base functions to support Oracle ASM service.
+#
+# $Id$
+#
+
+source /lib/lsb/oracle-base-functions || exit 1
+
+# Get ASM SID from ORATAB file
+#   oracle_asm_sids
+#
+oracle_asm_sids() {
+   oracle_cat_oratab --force | grep '^+' | cut -d ':' -f 1 
+}
+
+# Get default ASM SID
+#   oracle_asm_get_default_sid
+oracle_asm_get_default_sid() {
+    local sid
+
+    [ -r "$ORACONFIG" ] && . "$ORACONFIG"
+    sid=${ORACLE_ASM:-""}
+    [ -z "$sid" ] && sid=`oracle_asm_sids | head -1`
+    [ "$sid" = "*" ] && sid="\\*"
+    oracle_debug "$FUNCNAME: sid=$sid"
+    echo "$sid"
+}
+
+# Check if ASM is Oracle Restart resource
+#   oracle_asm_is_oracle_restart_resource sid
+oracle_asm_is_oracle_restart_resource() {
+    local sid=$1
+    local enabled=
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$sid" ] && sid=`oracle_asm_get_default_sid`
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID defined" && return $ORACLE_NOSID
+
+    oracle_env $sid --force
+    [ ! -x $ORACLE_HOME/bin/crsctl ] && oracle_error "Can't execute $ORACLE_HOME/bin/crsctl" && return $ORACLE_ERROR
+
+    if oracle_wait_for_process $ORACLE_HOME/bin/ocssd.bin 300 ; then
+        enabled=`$ORACLE_HOME/bin/crsctl status resource ora.asm -p | sed -n -e 's/^ENABLED=\([[:digit:]]\)/\1/p'`
+    fi
+
+    [ -z "$enabled" ] && oracle_error "There is no attribute ENABLED for ora.asm resource" && return $ORACLE_ERROR
+
+    [ $enabled -eq 1 ] && return $ORACLE_OKAY || return $ORACLE_ERROR
+}
+
+# Start Oracle ASM instance
+#   oracle_asm_dbstart sid [mode]
+#
+oracle_asm_dbstart() {
+    local sid=$1
+    local mod=$2
+    local rc=1
+    local hpfree shpfree
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$sid" ] && sid=`oracle_asm_get_default_sid`
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID to start" && return $ORACLE_NOSID
+
+    oracle_asm_is_oracle_restart_resource $sid && oracle_error "ASM database $sid is Oracle Restart resource" && return $ORACLE_PASS
+
+    oracle_env $sid --force
+
+    [ ! -x $ORACLE_HOME/bin/sqlplus ] && oracle_error "Can't execute $ORACLE_HOME/bin/sqlplus" && return $ORACLE_ERROR
+
+    # Check HugeMemory
+    hpfree=`oracle_cfg HUGEPAGES_FREE`
+    [ -z "$hpfree" ] && hpfree=0
+    shpfree=`sed -ne 's/^HugePages_Free:[[:space:]]\+\([[:digit:]]\+\)$/\1/p' /proc/meminfo`
+    [ -z "$shpfree" ] && shpfree=0
+
+    [ $shpfree -lt $hpfree ] && oracle_error "HugePages_Free $shpfree is less than required HugePages $hpfree" && return $ORACLE_ERROR
+
+    # Add for Oracle bug # 652997
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ORACLE_HOME}/lib ; export LD_LIBRARY_PATH
+
+    PFILE=${ORACLE_HOME}/dbs/init${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: PFILE=$PFILE"
+    SPFILE=${ORACLE_HOME}/dbs/spfile${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: SPFILE=$SPFILE"
+
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
+    else
+        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
+    fi
+    oracle_debug "$FUNCNAME: $SQLDBA"
+
+    pmon=`ps -ef | grep "asm_pmon_$ORACLE_SID" | grep -v grep`
+    oracle_debug "$FUNCNAME: pmon: $pmon"
+    if [ "$pmon" != "" ]; then
+        oracle_error "ASM database $sid already running"
+        rc=$ORACLE_PASS
+    elif [ -f $PFILE -o -f $SPFILE ] ; then
+        oracle_debug "$FUNCNAME: start ASM database $sid"
+        $SQLDBA << EOF
+connect / as sysoper
+startup $mod
+EOF
+        #FIXME: Need to parse output for errors
+        rc=$?
+    else
+        oracle_error "Not found config PFILE or SPFILE for SID $ORACLE_SID"
+        rc=$ORACLE_ERROR
+    fi
+
+    oracle_debug "$FUNCNAME: RC=$rc"
+    return $rc
+}
+
+# Stop Oracle ASM instance
+#   oracle_asm_dbshut sid mode
+#
+oracle_asm_dbshut() {
+    local sid=$1
+    local mod=$2
+    local rc=1
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID to stop" && return $ORACLE_NOSID
+
+    oracle_asm_is_oracle_restart_resource $sid && oracle_error "ASM database $sid is Oracle Restart resource" && return $ORACLE_PASS
+
+    oracle_env $sid --force
+
+    [ ! -x $ORACLE_HOME/bin/sqlplus ] && oracle_error "Can't execute $ORACLE_HOME/bin/sqlplus" && $ORACLE_ERROR
+
+    # Add for bug # 652997
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ORACLE_HOME}/lib ; export LD_LIBRARY_PATH
+
+    PFILE=${ORACLE_HOME}/dbs/init${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: PFILE=$PFILE"
+    SPFILE=${ORACLE_HOME}/dbs/spfile${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: SPFILE=$SPFILE"
+
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
+    else
+        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
+    fi
+    oracle_debug "$FUNCNAME: $SQLDBA"
+
+    pmon=`ps -ef | grep "asm_pmon_$ORACLE_SID" | grep -v grep`
+    oracle_debug "$FUNCNAME: pmon: $pmon"
+    if [ "$pmon" = "" ]; then
+        oracle_error "ASM database $sid is not running"
+        rc=$ORACLE_PASS
+    elif [ -f $PFILE -o -f $SPFILE ] ; then
+        oracle_debug "$FUNCNAME: stop ASM database $sid"
+        $SQLDBA << EOF
+connect / as sysoper
+shutdown $mod
+EOF
+        #FIXME: Need to parse output for errors
+        rc=$?
+    else
+        oracle_error "Not found config PFILE or SPFILE for SID $ORACLE_SID"
+        rc=$ORACLE_ERROR
+    fi
+
+    oracle_debug "$FUNCNAME: RC=$rc"
+    return $rc
+}
+
+# Check status of Oracle ASM
+#   oracle_asm_dbstatus sid
+#
+oracle_asm_dbstatus() {
+    local sid=$1 cnt rc=$ORACLE_PASS
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID to get status" && return $ORACLE_NOSID
+
+    cnt=`ps -ef | grep "asm_.*_$sid" | grep -v grep | wc -l`
+    [ $cnt -gt 0 ] && rc=$ORACLE_OKAY
+    oracle_error "ASM server processes: $cnt"
+    cnt=`ps -ef | grep "asm_.*_${sid}" | grep -v 'grep\|sed' | \
+         sed -e "s/.*asm_\(.*\)_${sid}.*/\1/" | tr '\n' ' '`
+    [ -n "$cnt" ] && oracle_error "$cnt"
+
+    if oracle_asm_is_oracle_restart_resource $sid ; then
+        oracle_error "ASM database $sid is an Oracle Restart resource"
+    else
+        oracle_error "ASM database $sid is not an Oracle Restart resource"
+    fi
+
+    return $rc
+}
+

@@ -1,0 +1,27 @@
+oracle-sysvinit
+---------------
+
+Order to start Oracle services:
+
+1 As standalone RDBMS server
+
+* oracle-listener
+* oracle-rdbms
+
+2 As standalone node with ASM, when Listener, ASM and RDBMS is not Retstart's services
+
+* oracle-restart
+* oracle-listener
+* oracle-asm
+* oracle-rdbms
+
+3 As standalone node with ASM, when Listener, ASM and RDBMS is Retstart's services
+
+* oracle-restart
+
+4 As cluster node
+
+* oracle-grid
+
+ -- Sergey Kryazhevskikh <soliverr@gmail.com>
+

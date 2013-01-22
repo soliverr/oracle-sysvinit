@@ -1,0 +1,7 @@
+README
+limits.conf
+sysctl.conf
+ldap.ora
+listener.ora
+sqlnet.ora
+tnsnames.ora

@@ -1,0 +1,9 @@
+# Oracle LDAP
+#
+# $Id$
+
+#DIRECTORY_SERVERS=(localhost:389)
+#DIRECTORY_SERVERS=(@ldap_1@,@ldap_2@,@ldap_3@,@ldap_4@)
+#DIRECTORY_SERVER_TYPE=oid
+#DEFAULT_ADMIN_CONTEXT="@ldap_dn@"
+

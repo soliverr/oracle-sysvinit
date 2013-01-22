@@ -1,0 +1,82 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+SHELL        = /bin/bash
+
+package      = oracle-sysvinit
+packages     = $(shell dh_listpackages)
+
+topdir       = $(shell pwd)
+debdir       = ${topdir}/debian
+tmpdir       = ${debdir}/tmp
+
+prefix       = /
+sysconfdir   = /etc
+lsbdir       = /lib/lsb
+logdir       = /var/log/oracle
+confdir      = /etc/default
+
+
+configure: configure-stamp
+	./configure --prefix=$(prefix) --sysconfdir=$(sysconfdir) \
+		--with-lsbdir=$(lsbdir) --with-confdir=$(confdir) --with-logdir=$(logdir)
+
+configure-stamp:
+	dh_testdir
+	touch configure-stamp
+
+build: build-stamp
+	./build.sh
+
+build-stamp: configure-stamp
+	dh_testdir
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean 
+
+install: build configure
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	
+	# Add here commands to install the package into DESTDIR
+	$(MAKE) install DESTDIR=$(tmpdir) DOCDIR=$(docdir) DISTRIB=DEBIAN
+	for p in $(packages) ; do \
+	    ln -s ../_pkg-functions debian/$$p.prerm.debhelper ; \
+	    ln -s ../_pkg-functions debian/$$p.postrm.debhelper ; \
+	    ln -s ../_pkg-functions debian/$$p.postinst.debhelper ; \
+	done
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_install --sourcedir=$(tmpdir)
+	dh_installexamples
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-dependent files here.
+binary-arch: build install
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

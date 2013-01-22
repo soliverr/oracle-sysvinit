@@ -1,0 +1,221 @@
+#! /bin/bash
+#
+# Base functions to support Oracle dbConsole service.
+#
+# $Id$
+#
+
+source /lib/lsb/oracle-base-functions || exit 1
+
+# Global variables ------------------------------------------
+#
+# Location of Oracle dbConsole scripts
+#
+ORACLE_DBCONSOLE_SCRIPTS=/etc/oracle/dbConsole
+
+#
+# Functions --------------------------------------------------
+#
+
+# Get EMHOME
+#
+oracle_dbconsole_get_emhome() {
+
+    [ ! -x $ORACLE_HOME/bin/emctl ] && oracle_debug "$FUNCNAME: Can't execute $ORACLE_HOME/bin/emctl" && return $ORACLE_ERROR
+
+    echo `$ORACLE_HOME/bin/emctl getemhome | sed -ne 's/^EMHOME=\(.*\)/\1/p'`
+}
+
+# Get OMS pid
+#
+oracle_dbconsole_oms_pid() {
+    local emhome=`oracle_dbconsole_get_emhome`
+    local dbconsole_pid
+    local fqdn=`hostname --fqdn`
+
+    dbconsole_pid=`head -1 $emhome/emctl.pid 2>&-`
+    [ -z "$dbconsole_pid" ] && dbconsole_pid=`pgrep -f "${ORACLE_HOME}\/.*java.*OC4J_DBConsole_${fqdn}_${ORACLE_SID}"` || true
+
+    echo "$dbconsole_pid"
+}
+
+# Get EmAgent pid
+#
+oracle_dbconsole_emagent_pid() {
+    local emhome=`oracle_dbconsole_get_emhome`
+    local agent_pid
+
+    agent_pid=`grep 'Agent Launched with PID' $emhome/sysman/log/emdb.nohup 2>&- | tail -1 | sed -e 's/.*PID \([[:digit:]]\+\) .*/\1/'`
+
+    # Guess PID if log is empty
+    [ -z "$agent_pid" ] && agent_pid=`ls -tr  $emhome/sysman/log/emagent_*.trc 2>&- | tail -1 | sed -e 's/.*_\([[:digit:]]\+\)\.trc.*/\1/'` || true
+    [ -z "$agent_pid" ] && agent_pid=`pgrep -f "$ORACLE_HOME\/bin\/emagent"` || true
+
+    if [ -n "$agent_pid" ] ; then
+        [ "$(ps -p $agent_pid -o comm=)" != "emagent" ] && agent_pid= || true
+    fi
+
+    echo "$agent_pid"
+}
+
+# Get EmWatchdDog pid
+#
+oracle_dbconsole_emwd_pid() {
+    local agent_pid="$1"
+    local emwd_pid
+
+    [ -z "$agent_pid" ] && agent_pid=`oracle_dbconsole_emagent_pid`
+
+    [ -n "$agent_pid" ] && emwd_pid=`ps -p $agent_pid -o ppid=` || true
+
+    echo "$emwd_pid"
+}
+
+# Force stop dbConsole services
+#
+oracle_dbconsole_force_stop() {
+    local dbconsole_pid emwd_pid agent_pid pid
+
+    oracle_debug "$FUNCNAME:"
+
+    dbconsole_pid=`oracle_dbconsole_oms_pid`
+    agent_pid=`oracle_dbconsole_emagent_pid`
+    emwd_pid=`oracle_dbconsole_emwd_pid "$agent_pid"`
+
+    for pid in $dbconsole_pid $agent_pid $emwd_pid ; do
+        kill -0 $pid 2>&- && kill -9 $pid
+    done
+}
+
+# Run sql file
+#
+oracle_dbconsole_run_sqlfile() {
+    local SQLDBA
+    local args="$@"
+
+    oracle_debug "$FUNCNAME:"
+
+    [ ! -x $ORACLE_HOME/bin/sqlplus ] && oracle_error "Can't execute $ORACLE_HOME/bin/sqlplus" && return $ORACLE_ERROR
+
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 2 /nolog"
+    else
+        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 2 /nolog\""
+    fi
+
+    $SQLDBA << EOF
+connect / as sysdba
+`i=1; for j in $args ; do echo define $i = "$j" ; i=$((i+1)) ; done`
+@$@
+exit
+EOF
+    rc=$?
+
+    return $rc
+}
+
+# Prestart scripts for dbConsole
+#
+oracle_dbconsole_prestart() {
+    local TIMELIMIT="/usr/bin/timelimit"
+
+    oracle_debug "$FUNCNAME:"
+
+    [ -d ${ORACLE_DBCONSOLE_SCRIPTS}/prestart ] || return
+
+    for i in ${ORACLE_DBCONSOLE_SCRIPTS}/prestart/* ; do
+        if [ -x "$i" ] ; then
+            oracle_debug "$FUNCNAME: start $TIMELIMIT $i"
+            if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+                $TIMELIMIT $i
+            else
+                su $ORA_OWNER --preserve-environment --command "$TIMELIMIT $i"
+            fi
+        fi
+    done
+}
+
+# Poststart scripts for dbConsole
+#
+oracle_dbconsole_poststart() {
+    local TIMELIMIT="/usr/bin/timelimit"
+
+    oracle_debug "$FUNCNAME:"
+
+    [ -d ${ORACLE_DBCONSOLE_SCRIPTS}/poststart ] || return $ORACLE_ERROR
+
+    for i in ${ORACLE_DBCONSOLE_SCRIPTS}/poststart/* ; do
+        if [ -x "$i" ] ; then
+            oracle_debug "$FUNCNAME start $TIMELIMIT $i"
+            if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+                $TIMELIMIT $i
+            else
+                su $ORA_OWNER --preserve-environment --command "$TIMELIMIT $i"
+            fi
+        fi
+    done
+}
+
+# Show status for OEM and EmAgent
+#
+oracle_dbconsole_status() {
+    local dbconsole_pid emwd_pid agent_pid
+
+    dbconsole_pid=`oracle_dbconsole_oms_pid`
+    agent_pid=`oracle_dbconsole_emagent_pid`
+    emwd_pid=`oracle_dbconsole_emwd_pid "$agent_pid"`
+
+    oracle_error "OMS pid        : $dbconsole_pid"
+    oracle_error "EmAgent pid    : $agent_pid"
+    oracle_error "EmWatchDog pid : $emwd_pid"
+
+    #FIXME: Show agent status: emctl status agent
+}
+
+# Control for dbConsole service
+#   oracle_dbconsole_command sid command force [arguments]
+#
+oracle_dbconsole_command() {
+    local sid=$1
+    local cmd=$2
+    local force=$3
+    local EMCTL rc
+    local args=
+    local dsid
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID defined" && return $ORACLE_NOSID
+
+    oracle_env $sid $force
+
+    [ ! -x $ORACLE_HOME/bin/emctl ] && oracle_error "Can't execute $ORACLE_HOME/bin/emctl" && return $ORACLE_ERROR
+
+    # Exclude sid, cmd, force
+    shift 3
+    args="$@"
+
+    if [ "$cmd" == "start" ] ; then
+        oracle_dbconsole_prestart
+    fi
+
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        EMCTL="${ORACLE_HOME}/bin/emctl $cmd $args"
+    else
+        EMCTL="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/emctl $cmd $args\""
+    fi
+    oracle_debug "$FUNCNAME: $EMCTL"
+
+    $EMCTL
+    rc=$?
+
+    case "$cmd" in
+        start  ) oracle_dbconsole_poststart ;;
+        stop   ) oracle_dbconsole_force_stop ;;
+        status ) oracle_dbconsole_status ;;
+    esac
+
+    oracle_debug "$FUNCNAME: RC=$rc"
+    return $rc
+}
+

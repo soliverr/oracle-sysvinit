@@ -1,0 +1,283 @@
+#! /bin/bash
+#
+# Base functions to support Oracle services.
+#
+# $Id$
+#
+
+# Global variables ------------------------------------------
+#
+# Switch debug on/off
+DEBUG=0
+
+# Location of Oracle oratab file
+#
+# Suppoted folow line format:
+#   $ORACLE_SID:$ORACLE_HOME:<N|Y>[:NLS_LANG:TNS_ADMIN]
+#
+ORATAB=/etc/oratab
+
+# Location of Oracle system configuration file
+#
+ORACONFIG="@confdir@/oracle"
+
+# Return codes for functions
+ORACLE_OKAY=0
+ORACLE_ERROR=1
+ORACLE_NOSID=2
+ORACLE_PASS=3
+
+# Set trace on ------------------------------------------------
+case "$ORACLE_TRACE" in
+    T|TRUE|True|1)
+        set -x
+        DEBUG=1
+    ;;
+    D|DEBUG|debug|Debug)
+        DEBUG=1
+    ;;
+esac
+
+#
+# Functions --------------------------------------------------
+#
+
+# Output debug message
+#
+oracle_debug() {
+    [ $DEBUG -gt 0 ] && echo "`date +%D-%T`: $1" >&2 || true
+}
+
+# Output error message
+#
+oracle_error() {
+    echo "$1" >&2
+}
+
+# Get RDBMS version from ORACLE_HOME
+#   oracle_orahome_version [ORA_HOME]
+oracle_orahome_version() {
+    local ohome=${1:-$ORACLE_HOME}
+    local dbver
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$ohome" ] && oracle_debug "$FUNCNAME: No ORA_HOME defined" && return
+
+    dbver=`grep 'COMP NAME="oracle.\(server\|rdbms\)"' $ORACLE_HOME/inventory/ContentsXML/comps.xml | \
+          head -1 | sed -e 's/.* VER="\([^"]\+\).*/\1/' 2>&-`
+
+    echo "$dbver"
+}
+
+# Get RDBMS patchset version from ORACLE_HOME
+#   oracle_orahome_patchset_version [ORA_HOME]
+oracle_orahome_patchset_version() {
+    local ohome=${1:-$ORACLE_HOME}
+    local psver
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$ohome" ] && oracle_debug "$FUNCNAME: No ORA_HOME defined" && return
+
+    psver=`grep 'PS_PATCH NAME="oracle.\(server\|rdbms\)"' $ORACLE_HOME/inventory/ContentsXML/comps.xml | \
+          head -1 | sed -e 's/.* VER="\([^"]\+\).*/\1/' 2>&-`
+
+    echo "$psver"
+}
+
+# Wait for process
+#   oracle_wait_for_process pattern seconds
+oracle_wait_for_process() {
+    local pat="$1"
+    local sec=$2
+    local cnt=0
+    local slp pid
+
+    oracle_debug "$FUNCNAME: parameters $*"
+
+    [ $sec -gt 10 ] && slp=10 || slp=1
+
+    while [ $cnt -lt $sec ] ; do
+        pid=`pgrep -f "$pat"`
+        [ -n "$pid" ] && break || cnt=$((cnt + $slp))
+        sleep $slp
+    done
+
+    [ -n "$pid" ] && return $ORACLE_OKAY || return $ORACLE_ERROR
+}
+
+# Get active lines from ORATAB file.
+# Usage:
+#    oracle_cat_oratab [--force]
+#       --force  - get all uncomment entries from ORATAB file
+#
+oracle_cat_oratab() {
+    if [ "$1" = "--force" ] ; then
+        [ -r $ORATAB ] && cat $ORATAB | grep -v '^#\|^$'
+    else
+        [ -r $ORATAB ] && cat $ORATAB | grep -v '^#\|^$' | grep ':[Yy]'
+    fi
+}
+
+# Get default ORACLE SID
+#
+# Default ORACLE SID is a first active line from ORATAB file.
+#
+oracle_get_default_sid() {
+    local sid
+
+    [ -r "$ORACONFIG" ] && . "$ORACONFIG"
+    sid=${ORACLE_SID:-""}
+    [ -z "$sid" ] && sid=`oracle_cat_oratab | head -1 | cut -d ':' -f 1`
+    [ "$sid" = "*" ] && sid="\\*"
+    oracle_debug "$FUNCNAME: sid=$sid"
+    echo "$sid"
+}
+
+# Get ORACLE_HOME for given ORACLE SID
+# Usage:
+#    oracle_dbhome [SID] [--force]
+#
+oracle_dbhome() {
+    local sid=$1
+    local force=$2
+    local ohm
+
+    [ -z "$sid" ] && sid=`oracle_get_default_sid`
+    oracle_debug "$FUNCNAME: sid=$sid"
+    ohm=`oracle_cat_oratab $force | grep "^${sid}:" | cut -d ':' -f 2`
+    oracle_debug "$FUNCNAME: ohm=$ohm"
+    echo "$ohm"
+}
+
+# Get variable from system configuration file
+#
+#  oracle_cfg VARIABLE [SID]
+#
+oracle_cfg() {
+    local var=$1
+    local sid=$2
+    local val
+
+    [ -z "$sid" ] && sid=`oracle_get_default_sid`
+    oracle_debug "$FUNCNAME: variable=$var sid=$sid"
+
+    [ -z "$var" ] && return
+    [ -r "$ORACONFIG" ] || return
+
+    # Получить значение для конкретного ORACLE_SID
+    val=`cat $ORACONFIG | sed -ne "s/^${sid}_${var}=\(.\+\) *$/\1/p" | sed -e "s/[\"\']//g" | head -1`
+    oracle_debug "$FUNCNAME: $sid : sid value = $val"
+    # Получить значение по умолчанию
+    if [ -z "$val" ] ; then 
+        val=`cat $ORACONFIG | sed -ne "s/^${var}=\(.\+\) *$/\1/p" | sed -e "s/[\"\']//g" | head -1`
+        oracle_debug "$FUNCNAME: default value = $val"
+    fi
+
+    oracle_debug "$FUNCNAME: result: VARIABLE = $var VALUE = $val"
+
+    echo "$val"
+}
+
+# Set Oracle environment for given ORACLE SID
+# Usage:
+#    oracle_env [SID] [--force]
+#
+oracle_env() {
+    local sid=$1
+    local force=$2
+    local ohp tns nls
+
+    # Force setup for Oracle environment
+    if [ -z "$sid" ] ; then
+        sid=`oracle_get_default_sid`
+        [ -n "$sid" ] && force="--force"
+    fi
+    oracle_debug "$FUNCNAME: sid=$sid force=$force"
+    [ -z "$sid" ] && oracle_debug "$FUNCNAME: No ORACLE_SID defined" && return
+
+    ohp=$ORACLE_HOME
+    ORACLE_SID=`echo "$sid" | sed -e '/\*/d'`
+    ORACLE_HOME=`oracle_dbhome "$sid" $force`
+
+    # Put new ORACLE_HOME in path and remove old one
+    [ -z "$ohp" ] && ohp=$PATH
+
+    case "$PATH" in
+        *$ohp/bin*)         PATH=`echo $PATH | sed "s;$ohp/bin;$ORACLE_HOME/bin;g"` ;;
+        *$ORACLE_HOME/bin*) ;;
+        *:)                 PATH=${PATH}$ORACLE_HOME/bin: ;;
+        "")                 PATH=$ORACLE_HOME/bin ;;
+        *)                  PATH=$PATH:$ORACLE_HOME/bin ;;
+    esac
+
+    # Set TNS_ADMIN
+    tns=`oracle_cat_oratab | grep "^${sid}:" | cut -d ':' -f 5`
+    [ -z "$tns" ] && tns=`oracle_cfg TNS_ADMIN $sid`
+    oracle_debug "$FUNCNAME: tns=$tns"
+    if [ -n "$tns" -a -d "$tns" ] ; then
+        TNS_ADMIN="$tns"
+    fi
+
+    # Set NLS_LANG
+    nls=`oracle_cat_oratab | grep "^${sid}:" | cut -d ':' -f 4`
+    [ -z "$nls" ] && nls=`oracle_cfg NLS_LANG $sid`
+    oracle_debug "$FUNCNAME: nls_lang=$nls"
+    if [ -n "$nls" ] ; then
+        NLS_LANG="$nls"
+    fi
+
+    # Set NLS_DATE_FORMAT
+    nls=`oracle_cfg NLS_DATE_FORMAT $sid`
+    oracle_debug "$FUNCNAME: nls_date_format=$nls"
+    if [ -n "$nls" ] ; then
+        NLS_DATE_FORMAT="$nls"
+    fi
+
+    # Set NLS_TIMESTAMP_FORMAT
+    nls=`oracle_cfg NLS_TIMESTAMP_FORMAT $sid`
+    oracle_debug "$FUNCNAME: nls_timestamp_format=$nls"
+    if [ -n "$nls" ] ; then
+        NLS_TIMESTAMP_FORMAT="$nls"
+    fi
+
+    # Set NLS_TIMESTAMP_TZ_FORMAT
+    nls=`oracle_cfg NLS_TIMESTAMP_TZ_FORMAT $sid`
+    oracle_debug "$FUNCNAME: nls_timestamp_tz_format=$nls"
+    if [ -n "$nls" ] ; then
+        NLS_TIMESTAMP_TZ_FORMAT="$nls"
+    fi
+
+    if [ $DEBUG -gt 0 ] ; then 
+        echo "oracle_env(): ORACLE_SID              = $ORACLE_SID" >&2
+        echo "oracle_env(): ORACLE_HOME             = $ORACLE_HOME" >&2
+        echo "oracle_env(): TNS_ADMIN               = $TNS_ADMIN" >&2
+        echo "oracle_env(): NLS_LANG                = $NLS_LANG" >&2
+        echo "oracle_env(): NLS_DATE_FORMAT         = $NLS_DATE_FORMAT" >&2
+        echo "oracle_env(): NLS_TIMESTAMP_FORMAT    = $NLS_TIMESTAMP_FORMAT" >&2
+        echo "oracle_env(): NLS_TIMESTAMP_TZ_FORMAT = $NLS_TIMESTAMP_TZ_FORMAT" >&2
+        echo "oracle_env(): PATH                    = $PATH" >&2
+    fi
+
+    export ORACLE_SID ORACLE_HOME PATH
+
+    if [ -n "$TNS_ADMIN" ] ; then 
+        export TNS_ADMIN
+    else
+        unset TNS_ADMIN
+    fi
+
+    if [ -n "$NLS_LANG" ] ; then 
+        export NLS_LANG
+    else
+        unset NLS_LANG
+    fi
+
+    if [ -n "$NLS_DATE_FORMAT" ] ; then 
+        export NLS_DATE_FORMAT
+    else
+        unset NLS_DATE_FORMAT
+    fi
+}
+

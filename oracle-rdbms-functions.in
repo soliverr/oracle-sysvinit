@@ -1,0 +1,249 @@
+#! /bin/bash
+#
+# Base functions to support Oracle RDBMS services.
+#
+# $Id$
+#
+
+source /lib/lsb/oracle-base-functions || exit 1
+
+#
+# Functions --------------------------------------------------
+#
+
+# Get SID from ORATAB file
+#   oracle_rdbms_sids [--force]
+#
+oracle_rdbms_sids() {
+    oracle_cat_oratab $1 | grep -v '^[*+]' | cut -d ':' -f 1 
+}
+
+# Check for Oracle Restart resource
+#   oracle_rdbms_is_oracle_restart_resource
+#
+oracle_rdbms_is_oracle_restart_resource() {
+    local sid=${1:-$ORACLE_SID}
+    local enabled=
+    
+    oracle_debug "$FUNCNAME: parameters: $*"
+
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID defined" && return $ORACLE_NOSID
+    
+    [ ! -x $ORACLE_HOME/bin/srvctl ] && oracle_error "Can't execute $ORACLE_HOME/bin/srvctl" && return $ORACLE_ERROR
+
+    $ORACLE_HOME/bin/srvctl status database -d $sid | grep -q -s '^PR..-[[:digit:]]\+ :'
+    enabled=$?
+
+    [ $enabled -eq 1 ] && return $ORACLE_OKAY || return $ORACLE_ERROR
+}
+
+# Start Oracle RDBMS instance
+#   oracle_rdbms_dbstart sid [standby_mode:auto|manual|none]
+#
+oracle_rdbms_dbstart() {
+    local sid=$1
+    local stb=${2:-"none"}
+    local rc=1
+    local hpfree shpfree
+
+    oracle_debug "$FUNCNAME: parameters: $*" 
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID to start" && return $ORACLE_NOSID
+
+    oracle_env $sid
+
+    oracle_rdbms_is_oracle_restart_resource $sid && oracle_error "RDBMS $sid is Oracle Restart resource" && return $ORACLE_PASS
+
+    [ ! -x $ORACLE_HOME/bin/sqlplus ] && oracle_error "Can't execute $ORACLE_HOME/bin/sqlplus" && return $ORACLE_ERROR
+
+    # Check HugeMemory
+    hpfree=`oracle_cfg HUGEPAGES_FREE`
+    [ -z "$hpfree" ] && hpfree=0
+    shpfree=`sed -ne 's/^HugePages_Free:[[:space:]]\+\([[:digit:]]\+\)$/\1/p' /proc/meminfo`
+    [ -z "$shpfree" ] && shpfree=0
+
+    [ $shpfree -lt $hpfree ] && oracle_error "HugePages_Free $shpfree is less than required HugePages $hpfree" && return $ORACLE_ERROR
+
+    # Add for Oracle bug # 652997
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ORACLE_HOME}/lib ; export LD_LIBRARY_PATH
+
+    PFILE=${ORACLE_HOME}/dbs/init${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: PFILE=$PFILE"
+    SPFILE=${ORACLE_HOME}/dbs/spfile${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: SPFILE=$SPFILE"
+
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
+    else
+        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
+    fi
+    oracle_debug "$FUNCNAME: $SQLDBA"
+
+    pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
+    oracle_debug "$FUNCNAME: pmon: $pmon"
+    if [ "$pmon" != "" ]; then
+        oracle_error "Database $sid already running"
+        rc=$ORACLE_PASS
+    elif [ -f $PFILE -o -f $SPFILE ] ; then
+        case "$stb" in
+            none)
+                oracle_debug "$FUNCNAME: start normal database $sid"
+                $SQLDBA << EOF
+connect / as sysoper
+startup
+EOF
+                #FIXME: Need to parse output for errors
+                rc=$?
+            ;;
+            auto)
+                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode"
+                $SQLDBA << EOF
+connect / as sysoper
+startup nomount
+alter database mount standby database;
+alter database recover managed standby database disconnect from session;
+EOF
+                #FIXME: Need to parse output for errors
+                rc=$?
+            ;;
+            manual)
+                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode"
+                $SQLDBA << EOF
+connect / as sysoper
+startup nomount
+alter database mount standby database;
+-- alter database recover automatic standby database;
+EOF
+                #FIXME: Need to parse output for errors
+                rc=$?
+            ;;
+            *)
+                oracle_error "Unsupported standby mode '$stb' for database $sid"
+                rc=$ORACLE_ERROR
+            ;;
+        esac
+    else
+        oracle_error "Not found config PFILE or SPFILE for SID $ORACLE_SID"
+        rc=$ORACLE_ERROR
+    fi
+
+    oracle_debug "$FUNCNAME: RC=$rc"
+    return $rc
+}
+
+# Stop Oracle RDBMS instance
+#   oracle_rdbms_dbshut sid mode [standby_mode:auto|manual|none]
+#
+oracle_rdbms_dbshut() {
+    local sid=$1
+    local mod=$2
+    local stb=${3:-"none"}
+    local rc=1
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID to stop" && return $ORACLE_NOSID
+
+    oracle_env $sid
+
+    oracle_rdbms_is_oracle_restart_resource $sid && oracle_error "RDBMS $sid is Oracle Restart resource" && return $ORACLE_PASS
+
+    [ ! -x $ORACLE_HOME/bin/sqlplus ] && oracle_error "Can't execute $ORACLE_HOME/bin/sqlplus" && return $ORACLE_ERROR
+
+    # Add for bug # 652997
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ORACLE_HOME}/lib ; export LD_LIBRARY_PATH
+
+    PFILE=${ORACLE_HOME}/dbs/init${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: PFILE=$PFILE"
+    SPFILE=${ORACLE_HOME}/dbs/spfile${ORACLE_SID}.ora
+    oracle_debug "$FUNCNAME: SPFILE=$SPFILE"
+
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
+    else
+        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
+    fi
+    oracle_debug "$FUNCNAME: $SQLDBA"
+
+    pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
+    oracle_debug "$FUNCNAME: pmon: $pmon"
+    if [ "$pmon" = "" ]; then
+        oracle_error "Database $sid is not running"
+        rc=$ORACLE_PASS
+    elif [ -f $PFILE -o -f $SPFILE ] ; then
+        case "$stb" in
+            none)
+                oracle_debug "$FUNCNAME: stop normal database $sid"
+                $SQLDBA << EOF
+connect / as sysoper
+shutdown $mod
+EOF
+                #FIXME: Need to parse output for errors
+                rc=$?
+            ;;
+            auto)
+                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode"
+                $SQLDBA << EOF
+connect / as sysoper
+alter database recover managed standby database cancel;
+shutdown $mod
+EOF
+                #FIXME: Need to parse output for errors
+                rc=$?
+            ;;
+            manual)
+                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode"
+                $SQLDBA << EOF
+connect / as sysoper
+alter database recover cancel;
+shutdown $mod
+EOF
+                #FIXME: Need to parse output for errors
+                rc=$?
+            ;;
+            *)
+                oracle_error "Unsupported standby mode '$stb' for database $sid"
+                rc=$ORACLE_ERROR
+            ;;
+        esac
+    else
+        oracle_error "Not found config PFILE or SPFILE for SID $ORACLE_SID"
+        rc=$ORACLE_ERROR
+    fi
+
+    oracle_debug "$FUNCNAME: RC=$rc"
+    return $rc
+}
+
+# Check status of Oracle RDBMS
+#   oracle_rdbms_dbstatus sid
+#
+oracle_rdbms_dbstatus() {
+    local sid=$1 cnt rc=$ORACLE_PASS bkg force=$2 pref
+
+    oracle_debug "$FUNCNAME: parameters: $*"
+    [ -z "$sid" ] && oracle_error "No ORACLE_SID to get status" && return $ORACLE_NOSID
+
+    oracle_env $sid $force
+
+    case "$sid" in.
+        XE) pref="xe" ;;
+        *)  pref="ora" ;;
+    esac
+
+    cnt=`ps -ef | grep "${pref}_[^s].*_${sid}" | grep -v grep | wc -l`
+    oracle_error "Background server processes: $cnt"
+    bkg=`ps -ef | grep "${pref}_[^s].*_${sid}" | grep -v 'grep\|sed' | \
+         sed -e "s/.*${pref}_\(.*\)_${sid}.*/\1/" | tr '\n' ' '`
+    [ -n "$bkg" ] && oracle_error "$bkg"
+    [ $cnt -gt 0 ] && rc=$ORACLE_OKAY
+    cnt=`ps -ef | grep "${pref}_[s].*_${sid}" | grep -v grep | wc -l`
+    oracle_error "Shared server processes: $cnt"
+    cnt=`ps -ef | grep "oracle${sid}" | grep -v grep | wc -l`
+    oracle_error "Dedicated server processes: $cnt"
+
+    if oracle_rdbms_is_oracle_restart_resource $sid 2>/dev/null; then
+        oracle_error "RDBMS $sid is an Oracle Restart resource"
+    fi
+
+    return $rc
+}
+

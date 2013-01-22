@@ -1,0 +1,73 @@
+Source: oracle-sysvinit
+Section: oracle/base
+Priority: required
+Maintainer: Kryazhevskikh Sergey, <soliverr@gmail.com>
+Build-Depends: debhelper (>= 5), autoconf (>= 2.61)
+Standards-Version: 3.7.2
+
+Package: oracle-sysvinit
+Architecture: all
+Depends: initscripts
+Description: Start/stop Oracle services.
+ Control Oracle services in common Linux way through 
+ sysvinit.
+ .
+ This package contains common libraries to proper set up
+ Oracle environment variables.
+
+Package: oracle-sysvinit-restart
+Architecture: all
+Depends: oracle-sysvinit
+Description: Start/stop Oracle Restart services.
+ Control Oracle Retsart services in common Linux way through 
+ sysvinit.
+ .
+ You should remove /etc/init.d/init.ohasd script to use scripts
+ from this package.
+
+Package: oracle-sysvinit-grid
+Architecture: all
+Depends: oracle-sysvinit
+Description: Start/stop Oracle Grid services.
+ Control Oracle Grid services in common Linux way through 
+ sysvinit.
+
+Package: oracle-sysvinit-listener
+Architecture: all
+Depends: oracle-sysvinit
+Description: Start/stop Oracle Listener services.
+ Control Oracle Listener services in common Linux way through
+ sysvinit.
+ .
+ This package intends to start standalone Oracle Listener services
+ configured through $TNS_ADMIN/listener.ora file.
+
+Package: oracle-sysvinit-asm
+Architecture: all
+Depends: oracle-sysvinit, oracle-sysvinit-restart
+Description: Start/stop Oracle ASM standalone RDBMS.
+ Control Oracle ASM standalone RDBMS in common Linux way through
+ sysvinit.
+ .
+ Use this package if ASM instance is not part of Oracle Restart or
+ Oracle Grid infrastructure.
+
+Package: oracle-sysvinit-rdbms
+Architecture: all
+Depends: oracle-sysvinit
+Description: Start/stop Oracle RDBMS.
+ Control Oracle RDBMS in common Linux way through 
+ sysvinit.
+ .
+ Use this package if Oracle RDBMS is not part of Oracle Restart or
+ Oracle Grid infrastructure and is not Oracle RAC instance.
+
+Package: oracle-sysvinit-dbconsole
+Architecture: all
+Depends: oracle-sysvinit
+Description: Start/stop Oracle dbConsole service.
+ Control Oracle dbConsole service in common Linux way through 
+ sysvinit.
+ .
+ Use this package if you use Oracle RDBMS version 10g or higher.
+

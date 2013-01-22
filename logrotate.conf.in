@@ -1,0 +1,18 @@
+#
+# Logrotate for scripts' logfile
+#
+# $Id$
+#
+@logdir@/oraclelog {
+    compress
+    copytruncate
+    monthly
+    rotate 12
+    size 100M
+    minsize 10M
+    maxage 365
+    missingok
+    nocreate
+    dateext
+    olddir @logdir@/archive
+}

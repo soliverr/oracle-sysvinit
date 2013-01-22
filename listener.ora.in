@@ -1,0 +1,26 @@
+# Oracle Listener
+#
+# $Id$
+
+# Каталог лог-файлов
+LOGGING_LISTENER         = ON
+LOG_DIRECTORY_LISTENER   = @logdir@
+LOG_FILE_LISTENER        = listener.log
+
+# Трейс файлы
+TRACE_LEVEL_LISTENER     = ON
+TRACE_DIRECTORY_LISTENER = @logdir@
+TRACE_FILE_LISTENER      = listener.trc
+
+# Time in seconds
+INBOUND_CONNECT_TIMEOUT_LISTENER = 1
+
+# Admin restrictions for command line
+ADMIN_RESTRICTIONS_LISTENER = ON
+
+# Default listener
+LISTENER =
+  (ADDRESS_LIST =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 0.0.0.0)(PORT = 1521))
+    (ADDRESS = (PROTOCOL = IPC)(KEY = @hostname@))
+)

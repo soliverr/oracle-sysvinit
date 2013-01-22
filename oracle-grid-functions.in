@@ -1,0 +1,10 @@
+#! /bin/bash
+#
+# Base functions to support Oracle Grid Infrastructure.
+#
+# $Id$
+#
+
+source /lib/lsb/oracle-base-functions || exit 1
+
+

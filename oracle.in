@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# Run-level Startup script for the Oracle services
+#
+# $Id$
+#
+
+### BEGIN INIT INFO
+# Provides:          oracle
+# Required-Start:    $null
+# Required-Stop:     $null
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Oracle services
+# Description:       Start all Oracle services.
+### END INIT INFO
+
+# chkconfig: 345 90 20
+# description: Startup/Shutdown Oracle Services
+#
+# Usage:
+#          start | stop | status
+
+SLOGFILE=@logdir@/oraclelog
+
+oracle_services="restart grid listener asm rdbms dbconsole"
+
+run_command() {
+    local cmd="$1"
+
+    for s in $oracle_services ; do
+        [ -x /etc/init.d/oracle-$s ] && /etc/init.d/oracle-$s $cmd
+    done
+}
+
+echo >> $SLOGFILE
+echo "I: $0: `date '+%F %T'`: Run command $* " >> $SLOGFILE
+
+oracle_usage() {
+    cat << __EOFF__
+ Usage: 
+   $0 start | stop | status
+ 
+ Control Oracle services.
+
+ Arguments:
+   start  - Start all configured Oracle services
+   stop   - Stop all configured Oracle services
+   status - Show status of all configured Oracle services
+__EOFF__
+}
+
+
+case "$1" in
+    start|stop|status)
+        run_command $1
+    ;;
+    help)
+        oracle_usage
+    ;;
+    *)
+        oracle_usage
+        exit 1
+esac
+
+echo >> $SLOGFILE
+
+exit 0
+

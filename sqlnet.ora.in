@@ -1,0 +1,18 @@
+# Oracle Net
+#
+# $Id$
+
+NAMES.DIRECTORY_PATH=(TNSNAMES)
+
+# Time in minutes
+SQLNET.EXPIRE_TIME=10
+
+# Clear stack buffers
+TCP.NODELAY=yes
+
+# Logfiles locations
+LOG_DIRECTORY_CLIENT=@logdir@
+LOG_FILE_CLIENT=sqlnet_client.log
+LOG_DIRECTORY_SERVER=@logdir@
+LOG_FILE_SERVER=sqlnet_server.log
+
