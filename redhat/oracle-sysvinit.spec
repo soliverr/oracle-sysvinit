@@ -3,10 +3,10 @@ Summary(ru_RU.UTF-8): Скрипты пуска/останова сервисо�
 Name      : oracle-sysvinit
 Version   : 1.0
 Release   : 22
-Group     : oracle/base
+Group     : System Environment
 
 Packager  : Kryazhevskikh Sergey, <soliverr@gmail.com>
-License   : GPL
+License   : GPLv2
 
 Requires  : initscripts
 BuildArch : noarch

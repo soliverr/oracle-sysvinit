@@ -1,5 +1,5 @@
 Source: oracle-sysvinit
-Section: oracle/base
+Section: admin
 Priority: required
 Maintainer: Kryazhevskikh Sergey, <soliverr@gmail.com>
 Build-Depends: debhelper (>= 5), autoconf (>= 2.61)
