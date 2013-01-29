@@ -224,7 +224,7 @@ oracle_rdbms_dbstatus() {
 
     oracle_env $sid $force
 
-    case "$sid" in.
+    case "$sid" in
         XE) pref="xe" ;;
         *)  pref="ora" ;;
     esac
