@@ -40,7 +40,7 @@ oracle_usage() {
     cat << __EOFF__
  Usage: 
    $0 start | stop | status
- 
+
  Control Oracle services.
 
  Arguments:

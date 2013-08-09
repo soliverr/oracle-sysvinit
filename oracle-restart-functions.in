@@ -23,7 +23,7 @@ oracle_restart_start() {
     local mode rc
 
     oracle_debug "$FUNCNAME: parameters: $*"
-    
+
     [ -r "$ORACONFIG" ] && . "$ORACONFIG"
 
     mode=${ORACLE_RESTART_MODE:-NATIVE}
@@ -75,7 +75,7 @@ oracle_restart_stop() {
 #   oracle_restart_status
 oracle_restart_status() {
     local pid sid ocssd str
-    
+
     oracle_debug "$FUNCNAME: parameters: $*"
 
     [ -r "$ORACONFIG" ] && . "$ORACONFIG"
@@ -91,7 +91,7 @@ oracle_restart_status() {
     # Get ORACLE_HOME from ASM
     sid=${ORACLE_ASM:-""}
     [ -z "$sid" ] && sid=`oracle_cat_oratab --force | grep '^+' | cut -d ':' -f 1 | head -1`
-    
+
     if [ -n "$sid" -a -n "$ocssd" ] ; then
         oracle_env $sid --force
         [ -x $ORACLE_HOME/bin/crsctl ] || return $ORACLE_PASS
