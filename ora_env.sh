@@ -8,7 +8,7 @@
 # $Id$
 #
 
-source /lib/lsb/oracle-base-functions
+source /lib/lsb/oracle-sysvinit-functions
 
 largs="$@"
 

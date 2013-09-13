@@ -1,8 +1,8 @@
 Summary   : Start/stop Oracle services.
 Summary(ru_RU.UTF-8): Скрипты пуска/останова сервисов Oracle.
 Name      : oracle-sysvinit
-Version   : 1.0
-Release   : 22
+Version   : 1.1
+Release   : 1
 Group     : System Environment
 
 Packager  : Kryazhevskikh Sergey, <soliverr@gmail.com>
@@ -539,7 +539,7 @@ postrm "redhat" "$action" $version
 %config(noreplace) %sysconfdir/logrotate.d/*
 %config(noreplace) %confdir/*
 %sysconfdir/profile.d/*
-%lsbdir/oracle-base-functions
+%lsbdir/oracle-sysvinit-functions
 /etc/rc.d/init.d/oracle
 /var/log/oracle/*
 
@@ -575,6 +575,9 @@ postrm "redhat" "$action" $version
 
 
 %changelog
+* Fri Sep 13 2013 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.1-1   11:28:50 +0600
+- Renamed `oracle-base-functions' to `oracle-sysvinit-functions' to clear things
+
 * Wed Dec 26 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-22  11:46:00 +0600
 - Fix error to get status of oracle XE instance
 

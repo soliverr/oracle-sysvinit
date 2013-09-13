@@ -3,7 +3,7 @@ dnl $Id$
 dnl
 
 AC_PREREQ(2.61)
-AC_INIT(oracle-sysvinit, 1.0, soliverr@gmail.com)
+AC_INIT(oracle-sysvinit, 1.1, soliverr@gmail.com)
 
 dnl Define variable localstatedir
 dnl localstatedir='/var'
@@ -78,7 +78,7 @@ AC_MSG_RESULT($lsbdir)
 
 AC_CONFIG_FILES([Makefile logrotate.conf sqlnet.ora listener.ora])
 AC_OUTPUT([_pkg-functions test.sh build_expand.sh])
-AC_OUTPUT([oracle-base-functions oracle-asm-functions oracle-dbconsole-functions])
+AC_OUTPUT([oracle-sysvinit-functions oracle-asm-functions oracle-dbconsole-functions])
 AC_OUTPUT([oracle-grid-functions oracle-listener-functions oracle-rdbms-functions oracle-restart-functions])
 AC_OUTPUT([oracle oracle-asm oracle-dbconsole])
 AC_OUTPUT([oracle-grid oracle-listener oracle-rdbms oracle-restart])

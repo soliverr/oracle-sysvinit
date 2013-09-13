@@ -1,6 +1,6 @@
 etc/init.d/oracle
 etc/profile.d/ora_env.sh
-lib/lsb/oracle-base-functions
+lib/lsb/oracle-sysvinit-functions
 etc/logrotate.d/oracle-sysvinit.conf 
 etc/default/oracle
 var/log/oracle

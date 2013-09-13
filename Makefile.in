@@ -88,7 +88,7 @@ install-docs:
 install-files: install-config install-sql install-sh install-logrotate
 	# Install files
 	$(INSTALL) --mode 755 oracle-asm-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-base-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-sysvinit-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-dbconsole-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-grid-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-listener-functions $(DESTDIR)$(lsbdir)

@@ -5,7 +5,7 @@
 # $Id$
 #
 
-source /lib/lsb/oracle-base-functions || exit 1
+source /lib/lsb/oracle-sysvinit-functions || exit 1
 
 # Delete /etc/init.d/ohasd from all run levels
 #   oracle_restart_remove_ohasd
