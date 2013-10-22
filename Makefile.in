@@ -87,8 +87,8 @@ install-docs:
 
 install-files: install-config install-sql install-sh install-logrotate
 	# Install files
+	$(INSTALL) --mode 755 oracle-base-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-asm-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-sysvinit-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-dbconsole-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-grid-functions $(DESTDIR)$(lsbdir)
 	$(INSTALL) --mode 755 oracle-listener-functions $(DESTDIR)$(lsbdir)
@@ -123,13 +123,12 @@ install-logrotate:
 	fi
 
 clean:
-	fakeroot ./debian/rules clean
-
-distclean: clean
 	rm -fv logrotate.conf sqlnet.ora listener.ora oracle-*-functions _pkg-functions
 	rm -fv oracle oracle-asm oracle-dbconsole oracle-grid oracle-listener oracle-rdbms oracle-restart
 	rm -fv test.sh build_expand.sh
 	rm -f Makefile config.h config.status config.cache config.log
+
+distclean: clean
 	rm -rf autom4te.cache
 	find . -type f -iwholename '*~' -exec rm -fv {} ';'
 	if [ -d test ] ; then  rm -rf test ; fi
@@ -139,6 +138,7 @@ distclean: clean
 mostlyclean: clean
 
 maintainer-clean: clean
+	fakeroot ./debian/rules clean
 
 # automatic re-running of configure if the configure.ac file has changed
 ${srcdir}/configure: configure.ac

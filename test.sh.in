@@ -2,7 +2,7 @@
 
 
 export ORACLE_TRACE=Debug
-source @lsbdir@/oracle-sysvinit-functions
+source @lsbdir@/oracle-base-functions
 
 #oracle_start
 

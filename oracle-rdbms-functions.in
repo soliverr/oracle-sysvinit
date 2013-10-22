@@ -5,7 +5,7 @@
 # $Id$
 #
 
-source /lib/lsb/oracle-sysvinit-functions || exit 1
+source /lib/lsb/oracle-base-functions || exit 1
 
 #
 # Functions --------------------------------------------------
@@ -31,7 +31,7 @@ oracle_rdbms_is_oracle_restart_resource() {
     
     [ ! -x $ORACLE_HOME/bin/srvctl ] && oracle_error "Can't execute $ORACLE_HOME/bin/srvctl" && return $ORACLE_ERROR
 
-    $ORACLE_HOME/bin/srvctl status database -d $sid | grep -q -s '^PR..-[[:digit:]]\+ :'
+    $ORACLE_HOME/bin/srvctl status database -d $sid | grep -q -s '^PR..-[[:digit:]]\+ :\|^****Unable'
     enabled=$?
 
     [ $enabled -eq 1 ] && return $ORACLE_OKAY || return $ORACLE_ERROR

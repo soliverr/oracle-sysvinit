@@ -1,166 +1,165 @@
-oracle-sysvinit (1.1-1) stable; urgency=low
+oracle-sysvinit (1.1-2) stable; urgency=high
 
- * Renamed `oracle-base-functions' to `oracle-sysvinit-functions' to clear
-   things
+  * Fixed bug [ticket:#4]
 
- -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 13 Sep 2013 11:28:50 +0600
+ -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 18 Oct 2013 13:29:49 +0600
 
 oracle-sysvinit (1.0-22) stable; urgency=low
 
- * Fix error to get status of oracle XE instance
+  * Fix error to get status of oracle XE instance
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Wed, 26 Dec 2012 11:46:00 +0600
 
 oracle-sysvinit (1.0-21) stable; urgency=low
 
- * Run pre-,postscripts in oracle-dbconsole as ORA_OWNER user
+  * Run pre-,postscripts in oracle-dbconsole as ORA_OWNER user
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Wed, 10 Oct 2012 10:18:14 +0600
 
 oracle-sysvinit (1.0-20) stable; urgency=low
 
- * New status function for oracle dbConsole (OMS)
- * Supported arguments for oracle_dbconsole_run_sqlfile
+  * New status function for oracle dbConsole (OMS)
+  * Supported arguments for oracle_dbconsole_run_sqlfile
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 05 Oct 2012 12:34:17 +0600
 
 oracle-sysvinit (1.0-19) stable; urgency=low
 
- * Fixed bug with return value from while loop
+  * Fixed bug with return value from while loop
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Thu, 13 Sep 2012 10:47:33 +0600
 
 oracle-sysvinit (1.0-18) stable; urgency=low
 
- * Return status from init.d scripts
- * Get status of dbConsole in force mode
+  * Return status from init.d scripts
+  * Get status of dbConsole in force mode
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Mon, 10 Sep 2012 16:27:49 +0600
 
 oracle-sysvinit (1.0-17) stable; urgency=low
 
- * Fixed error in oracle_debug function
+  * Fixed error in oracle_debug function
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Thu, 23 Aug 2012 12:15:27 +0600
 
 oracle-sysvinit (1.0-16) stable; urgency=low
 
- * Fixed error in oracle_dbconsole_prestart and oracle_dbconsole_poststart
+  * Fixed error in oracle_dbconsole_prestart and oracle_dbconsole_poststart
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 21 Aug 2012 16:12:06 +0600
 
 oracle-sysvinit (1.0-15) stable; urgency=low
 
- * Fixed error in dbconsole_get_emhome function name
+  * Fixed error in dbconsole_get_emhome function name
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 21 Aug 2012 15:11:34 +0600
 
 oracle-sysvinit (1.0-14) stable; urgency=low
 
- * Add force mode to setup ORACLE environment in dbConsole functions
+  * Add force mode to setup ORACLE environment in dbConsole functions
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 10 Jul 2012 12:22:05 +0600
 
 oracle-sysvinit (1.0-13) stable; urgency=low
 
- * New order for start/stop init.d scripts
+  * New order for start/stop init.d scripts
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Thu, 05 Jul 2012 17:49:24 +0600
 
 oracle-sysvinit (1.0-12.4) stable; urgency=low
 
- * Fixed errors in package scripts for Debian
+  * Fixed errors in package scripts for Debian
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 03 Jul 2012 17:55:09 +0600
 
 oracle-sysvinit (1.0-12.3) stable; urgency=low
 
- * Fix in dbconsole startup script
+  * Fix in dbconsole startup script
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 03 Jul 2012 17:15:03 +0600
 
 oracle-sysvinit (1.0-12.2) stable; urgency=low
 
- * Another little fix in dbconsole package
+  * Another little fix in dbconsole package
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 03 Jul 2012 16:25:39 +0600
 
 oracle-sysvinit (1.0-12.1) stable; urgency=low
 
- * Little fix in dbconsole package
+  * Little fix in dbconsole package
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 03 Jul 2012 16:06:09 +0600
 
 oracle-sysvinit (1.0-12) stable; urgency=low
 
- * Fixed bug in oracle_listener_is_oracle_restart_resource
+  * Fixed bug in oracle_listener_is_oracle_restart_resource
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Mon, 02 Jul 2012 13:12:19 +0600
 
 oracle-sysvinit (1.0-11) stable; urgency=low
 
- * Fixed bug in oracle_rdbms_is_oracle_restart_resource
+  * Fixed bug in oracle_rdbms_is_oracle_restart_resource
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 19 Jun 2012 18:27:30 +0600
 
 oracle-sysvinit (1.0-10) stable; urgency=low
 
- * oracle_orahome_patchset_version function to check PatchSets version
+  * oracle_orahome_patchset_version function to check PatchSets version
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Tue, 19 Jun 2012 16:11:09 +0600
 
 oracle-sysvinit (1.0-9) stable; urgency=low
 
- * Fix dependecy to initscripts
+  * Fix dependecy to initscripts
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 15 Jun 2012 17:35:39 +0600
 
 oracle-sysvinit (1.0-8) stable; urgency=low
 
- * Check whether RDBMS service is Oracle Restart Resource
- * Check whether Listener service is Oracle Restart Resource
+  * Check whether RDBMS service is Oracle Restart Resource
+  * Check whether Listener service is Oracle Restart Resource
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Thu, 14 Jun 2012 13:12:23 +0600
 
 oracle-sysvinit (1.0-7) stable; urgency=low
 
- * Fix error while removing old ORACLE_HOME from PATH
+  * Fix error while removing old ORACLE_HOME from PATH
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Sat, 09 Jun 2012 13:23:11 +0600
 
 oracle-sysvinit (1.0-6) stable; urgency=low
 
- * More reliable way to get RDBMS ORAHOME version
+  * More reliable way to get RDBMS ORAHOME version
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Wed, 23 May 2012 13:17:58 +0600
 
 oracle-sysvinit (1.0-5) stable; urgency=low
 
- * oracle_orahome_version get full version of oracle.server component
+  * oracle_orahome_version get full version of oracle.server component
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 27 Apr 2012 15:07:49 +0600
 
 oracle-sysvinit (1.0-4) stable; urgency=low
 
- * oracle_orahome_version function is added
+  * oracle_orahome_version function is added
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 27 Apr 2012 12:24:22 +0600
 
 oracle-sysvinit (1.0-3) stable; urgency=low
 
- * Fix error in control dbConsole service
+  * Fix error in control dbConsole service
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Thu, 26 Apr 2012 18:12:23 +0600
 
 oracle-sysvinit (1.0-2) stable; urgency=low
 
- * Fix error when remove /etc/rc?.d/*ohasd files
+  * Fix error when remove /etc/rc?.d/*ohasd files
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Thu, 26 Apr 2012 11:14:48 +0600
 
 oracle-sysvinit (1.0-1) stable; urgency=low
 
- * Initial version for Debian
+  * Initial version for Debian
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 20 Apr 2012 12:35:02 +0600
 
