@@ -24,8 +24,8 @@
 #          dbconsole command [sid]
 #
 
-source /lib/lsb/oracle-dbconsole-functions
-source /lib/lsb/oracle-rdbms-functions
+source @liblsb@/oracle-dbconsole-functions
+source @liblsb@/oracle-rdbms-functions
 
 SLOGFILE=@logdir@/oraclelog
 ORA_OWNER="oracle"

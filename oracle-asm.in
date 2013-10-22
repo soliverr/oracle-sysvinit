@@ -24,7 +24,7 @@
 # Usage:
 #          start | stop | status
 
-source /lib/lsb/oracle-asm-functions
+source @liblsb@/oracle-asm-functions
 
 SLOGFILE=@logdir@/oraclelog
 ORA_OWNER="oracle"

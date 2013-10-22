@@ -23,7 +23,7 @@
 # Usage:
 #          start | stop | status
 
-source /lib/lsb/oracle-grid-functions
+source @liblsb@/oracle-grid-functions
 
 SLOGFILE=@logdir@/oraclelog
 ORA_OWNER="oracle"

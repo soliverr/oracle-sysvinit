@@ -19,7 +19,7 @@ BuildRoot : %{_tmppath}/%{name}-%{version}
 %define sysconfdir      /etc
 %define confdir         /etc/sysconfig
 %define logdir          /var/log/oracle
-%define lsbdir          /lib/lsb
+%define liblsb          /lib/lsb
 %define pkg_build_dir   %_builddir/%name-%version
 %define pkg_functions   %pkg_build_dir/_pkg-functions
 
@@ -159,7 +159,7 @@ Use this package if you use Oracle RDBMS version 10g or higher.
 %setup -q
 ./build.sh
 ./configure --prefix=%prefix --sysconfdir=%sysconfdir --docdir=%docdir \
-  --with-lsbdir=%lsbdir --with-confdir=%confdir --with-logdir=%logdir
+  --with-liblsb=%liblsb --with-confdir=%confdir --with-logdir=%logdir
 
 %build
 
@@ -539,38 +539,38 @@ postrm "redhat" "$action" $version
 %config(noreplace) %sysconfdir/logrotate.d/*
 %config(noreplace) %confdir/*
 %sysconfdir/profile.d/*
-%lsbdir/oracle-base-functions
+%liblsb/oracle-base-functions
 /etc/rc.d/init.d/oracle
 /var/log/oracle/*
 
 %files restart
 %defattr(-,root,root)
-%lsbdir/oracle-restart-functions
+%liblsb/oracle-restart-functions
 /etc/rc.d/init.d/oracle-restart
 
 %files grid
 %defattr(-,root,root)
-%lsbdir/oracle-grid-functions
+%liblsb/oracle-grid-functions
 /etc/rc.d/init.d/oracle-grid
 
 %files listener
 %defattr(-,root,root)
-%lsbdir/oracle-listener-functions
+%liblsb/oracle-listener-functions
 /etc/rc.d/init.d/oracle-listener
 
 %files asm
 %defattr(-,root,root)
-%lsbdir/oracle-asm-functions
+%liblsb/oracle-asm-functions
 /etc/rc.d/init.d/oracle-asm
 
 %files rdbms
 %defattr(-,root,root)
-%lsbdir/oracle-rdbms-functions
+%liblsb/oracle-rdbms-functions
 /etc/rc.d/init.d/oracle-rdbms
 
 %files dbconsole
 %defattr(-,root,root)
-%lsbdir/oracle-dbconsole-functions
+%liblsb/oracle-dbconsole-functions
 /etc/rc.d/init.d/oracle-dbconsole
 
 

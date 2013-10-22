@@ -57,27 +57,28 @@ AC_SUBST(confdir)
 AC_MSG_RESULT($confdir)
 
 dnl Directory to install library according with LSB
-lsbdir='/lib/lsb'
-AC_MSG_CHECKING(lsbdir)
-AC_ARG_WITH(lsbdir,
-[  --with-lsbdir=DIR      Directory for config files [/lib/lsb] ],
+liblsb='/lib/lsb'
+AC_MSG_CHECKING(liblsb)
+AC_ARG_WITH(liblsb,
+[  --with-liblsb=DIR      Directory for system wide functions files [/lib/lsb] ],
 [ case "$withval" in
     no)
-        AC_MSG_ERROR(Need confdir)
+        AC_MSG_ERROR(Need liblsb)
         ;;
     [[\\/$]]* | ?:[[\\/]]* )
-        lsbdir="$withval"
+        liblsb="$withval"
         ;;
     yes | *)
-        AC_MSG_ERROR([expected an absolute directory name for --with-lsbdir: $withval])
+        AC_MSG_ERROR([expected an absolute directory name for --with-liblsb: $withval])
         ;;
   esac ]
 )
-AC_SUBST(lsbdir)
-AC_MSG_RESULT($lsbdir)
+AC_SUBST(liblsb)
+AC_MSG_RESULT($liblsb)
 
 AC_CONFIG_FILES([Makefile logrotate.conf sqlnet.ora listener.ora])
 AC_OUTPUT([_pkg-functions test.sh build_expand.sh])
+AC_OUTPUT([ora_env.sh])
 AC_OUTPUT([oracle-sysvinit-functions oracle-asm-functions oracle-dbconsole-functions])
 AC_OUTPUT([oracle-grid-functions oracle-listener-functions oracle-rdbms-functions oracle-restart-functions])
 AC_OUTPUT([oracle oracle-asm oracle-dbconsole])

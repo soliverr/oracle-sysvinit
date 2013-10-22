@@ -24,7 +24,7 @@
 # Usage:
 #          start | stop | status
 
-source /lib/lsb/oracle-restart-functions
+source @liblsb@/oracle-restart-functions
 
 SLOGFILE=@logdir@/oraclelog
 ORA_OWNER="oracle"

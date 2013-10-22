@@ -20,14 +20,14 @@ tmpdir       = ${debdir}/tmp
 
 prefix       = /
 sysconfdir   = /etc
-lsbdir       = /lib/lsb
+liblsb       = /lib/lsb
 logdir       = /var/log/oracle
 confdir      = /etc/default
 
 
 configure: configure-stamp
 	./configure --prefix=$(prefix) --sysconfdir=$(sysconfdir) \
-		--with-lsbdir=$(lsbdir) --with-confdir=$(confdir) --with-logdir=$(logdir)
+		--with-liblsb=$(liblsb) --with-confdir=$(confdir) --with-logdir=$(logdir)
 
 configure-stamp:
 	dh_testdir

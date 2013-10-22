@@ -8,7 +8,7 @@
 # $Id$
 #
 
-source /lib/lsb/oracle-base-functions
+source @liblsb@/oracle-base-functions
 
 largs="$@"
 

@@ -19,7 +19,7 @@ prefix          = @prefix@
 exec_prefix     = @exec_prefix@
 sbindir         = @sbindir@
 libdir          = @libdir@
-lsbdir          = @lsbdir@
+liblsb          = @liblsb@
 libexecdir      = @libexecdir@
 sysconfdir      = @sysconfdir@
 confdir         = @confdir@
@@ -70,7 +70,7 @@ install-base-dirs:
 	$(INSTALL) --directory --mode 755 $(DESTDIR)$(logdir)/archive
 	$(INSTALL) --directory --mode 755 $(DESTDIR)$(INITD)
 	$(INSTALL) --directory --mode 755 $(DESTDIR)$(PROFILED)
-	$(INSTALL) --directory --mode 755 $(DESTDIR)$(lsbdir)
+	$(INSTALL) --directory --mode 755 $(DESTDIR)$(liblsb)
 
 install-dirs: install-base-dirs
 	# Create package's dirs
@@ -87,13 +87,13 @@ install-docs:
 
 install-files: install-config install-sql install-sh install-logrotate
 	# Install files
-	$(INSTALL) --mode 755 oracle-base-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-asm-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-dbconsole-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-grid-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-listener-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-rdbms-functions $(DESTDIR)$(lsbdir)
-	$(INSTALL) --mode 755 oracle-restart-functions $(DESTDIR)$(lsbdir)
+	$(INSTALL) --mode 755 oracle-base-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 755 oracle-asm-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 755 oracle-dbconsole-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 755 oracle-grid-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 755 oracle-listener-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 755 oracle-rdbms-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 755 oracle-restart-functions $(DESTDIR)$(liblsb)
 	$(INSTALL) --mode 755 oracle-asm $(DESTDIR)$(INITD)
 	$(INSTALL) --mode 755 oracle-dbconsole $(DESTDIR)$(INITD)
 	$(INSTALL) --mode 755 oracle-grid $(DESTDIR)$(INITD)
@@ -124,7 +124,7 @@ install-logrotate:
 
 clean:
 	rm -fv logrotate.conf sqlnet.ora listener.ora oracle-*-functions _pkg-functions
-	rm -fv oracle oracle-asm oracle-dbconsole oracle-grid oracle-listener oracle-rdbms oracle-restart
+	rm -fv oracle oracle-asm oracle-dbconsole oracle-grid oracle-listener oracle-rdbms oracle-restart ora_env.sh
 	rm -fv test.sh build_expand.sh
 	rm -f Makefile config.h config.status config.cache config.log
 

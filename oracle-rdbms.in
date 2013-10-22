@@ -26,7 +26,7 @@
 #          standby  start [sid] [mode] | stop [sid] [mode] | status [sid]
 #
 
-source /lib/lsb/oracle-rdbms-functions
+source @liblsb@/oracle-rdbms-functions
 
 SLOGFILE=@logdir@/oraclelog
 ORA_OWNER="oracle"

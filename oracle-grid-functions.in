@@ -5,6 +5,6 @@
 # $Id$
 #
 
-source /lib/lsb/oracle-base-functions || exit 1
+source @liblsb@/oracle-base-functions || exit 1
 
 

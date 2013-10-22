@@ -25,7 +25,7 @@
 #          listener command [listener_name | all]
 #
 
-source /lib/lsb/oracle-listener-functions
+source @liblsb@/oracle-listener-functions
 
 SLOGFILE=@logdir@/oraclelog
 ORA_OWNER="oracle"
