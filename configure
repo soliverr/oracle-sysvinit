@@ -1247,7 +1247,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-logdir=DIR       Directory for logfiles LOCALSTATEDIR/log/oracle
   --with-confdir=DIR      Directory for config files SYSCONFDIR/PACKAGE_NAME
-  --with-liblsb=DIR      Directory for system wide functions files /lib/lsb
+  --with-liblsb=DIR       Directory for system wide functions files /lib/lsb
 
 Report bugs to <soliverr@gmail.com>.
 _ACEOF
@@ -4082,7 +4082,7 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-ac_config_files="$ac_config_files oracle-sysvinit-functions oracle-asm-functions oracle-dbconsole-functions"
+ac_config_files="$ac_config_files oracle-base-functions oracle-asm-functions oracle-dbconsole-functions"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4797,7 +4797,7 @@ do
     "test.sh") CONFIG_FILES="$CONFIG_FILES test.sh" ;;
     "build_expand.sh") CONFIG_FILES="$CONFIG_FILES build_expand.sh" ;;
     "ora_env.sh") CONFIG_FILES="$CONFIG_FILES ora_env.sh" ;;
-    "oracle-sysvinit-functions") CONFIG_FILES="$CONFIG_FILES oracle-sysvinit-functions" ;;
+    "oracle-base-functions") CONFIG_FILES="$CONFIG_FILES oracle-base-functions" ;;
     "oracle-asm-functions") CONFIG_FILES="$CONFIG_FILES oracle-asm-functions" ;;
     "oracle-dbconsole-functions") CONFIG_FILES="$CONFIG_FILES oracle-dbconsole-functions" ;;
 
@@ -5964,7 +5964,7 @@ do
     "test.sh") CONFIG_FILES="$CONFIG_FILES test.sh" ;;
     "build_expand.sh") CONFIG_FILES="$CONFIG_FILES build_expand.sh" ;;
     "ora_env.sh") CONFIG_FILES="$CONFIG_FILES ora_env.sh" ;;
-    "oracle-sysvinit-functions") CONFIG_FILES="$CONFIG_FILES oracle-sysvinit-functions" ;;
+    "oracle-base-functions") CONFIG_FILES="$CONFIG_FILES oracle-base-functions" ;;
     "oracle-asm-functions") CONFIG_FILES="$CONFIG_FILES oracle-asm-functions" ;;
     "oracle-dbconsole-functions") CONFIG_FILES="$CONFIG_FILES oracle-dbconsole-functions" ;;
     "oracle-grid-functions") CONFIG_FILES="$CONFIG_FILES oracle-grid-functions" ;;
@@ -7135,7 +7135,7 @@ do
     "test.sh") CONFIG_FILES="$CONFIG_FILES test.sh" ;;
     "build_expand.sh") CONFIG_FILES="$CONFIG_FILES build_expand.sh" ;;
     "ora_env.sh") CONFIG_FILES="$CONFIG_FILES ora_env.sh" ;;
-    "oracle-sysvinit-functions") CONFIG_FILES="$CONFIG_FILES oracle-sysvinit-functions" ;;
+    "oracle-base-functions") CONFIG_FILES="$CONFIG_FILES oracle-base-functions" ;;
     "oracle-asm-functions") CONFIG_FILES="$CONFIG_FILES oracle-asm-functions" ;;
     "oracle-dbconsole-functions") CONFIG_FILES="$CONFIG_FILES oracle-dbconsole-functions" ;;
     "oracle-grid-functions") CONFIG_FILES="$CONFIG_FILES oracle-grid-functions" ;;
@@ -8309,7 +8309,7 @@ do
     "test.sh") CONFIG_FILES="$CONFIG_FILES test.sh" ;;
     "build_expand.sh") CONFIG_FILES="$CONFIG_FILES build_expand.sh" ;;
     "ora_env.sh") CONFIG_FILES="$CONFIG_FILES ora_env.sh" ;;
-    "oracle-sysvinit-functions") CONFIG_FILES="$CONFIG_FILES oracle-sysvinit-functions" ;;
+    "oracle-base-functions") CONFIG_FILES="$CONFIG_FILES oracle-base-functions" ;;
     "oracle-asm-functions") CONFIG_FILES="$CONFIG_FILES oracle-asm-functions" ;;
     "oracle-dbconsole-functions") CONFIG_FILES="$CONFIG_FILES oracle-dbconsole-functions" ;;
     "oracle-grid-functions") CONFIG_FILES="$CONFIG_FILES oracle-grid-functions" ;;

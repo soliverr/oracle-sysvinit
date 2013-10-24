@@ -87,13 +87,13 @@ install-docs:
 
 install-files: install-config install-sql install-sh install-logrotate
 	# Install files
-	$(INSTALL) --mode 755 oracle-base-functions $(DESTDIR)$(liblsb)
-	$(INSTALL) --mode 755 oracle-asm-functions $(DESTDIR)$(liblsb)
-	$(INSTALL) --mode 755 oracle-dbconsole-functions $(DESTDIR)$(liblsb)
-	$(INSTALL) --mode 755 oracle-grid-functions $(DESTDIR)$(liblsb)
-	$(INSTALL) --mode 755 oracle-listener-functions $(DESTDIR)$(liblsb)
-	$(INSTALL) --mode 755 oracle-rdbms-functions $(DESTDIR)$(liblsb)
-	$(INSTALL) --mode 755 oracle-restart-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-base-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-asm-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-dbconsole-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-grid-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-listener-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-rdbms-functions $(DESTDIR)$(liblsb)
+	$(INSTALL) --mode 644 oracle-restart-functions $(DESTDIR)$(liblsb)
 	$(INSTALL) --mode 755 oracle-asm $(DESTDIR)$(INITD)
 	$(INSTALL) --mode 755 oracle-dbconsole $(DESTDIR)$(INITD)
 	$(INSTALL) --mode 755 oracle-grid $(DESTDIR)$(INITD)

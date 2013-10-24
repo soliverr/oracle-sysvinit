@@ -60,7 +60,7 @@ dnl Directory to install library according with LSB
 liblsb='/lib/lsb'
 AC_MSG_CHECKING(liblsb)
 AC_ARG_WITH(liblsb,
-[  --with-liblsb=DIR      Directory for system wide functions files [/lib/lsb] ],
+[  --with-liblsb=DIR       Directory for system wide functions files [/lib/lsb] ],
 [ case "$withval" in
     no)
         AC_MSG_ERROR(Need liblsb)
@@ -79,7 +79,7 @@ AC_MSG_RESULT($liblsb)
 AC_CONFIG_FILES([Makefile logrotate.conf sqlnet.ora listener.ora])
 AC_OUTPUT([_pkg-functions test.sh build_expand.sh])
 AC_OUTPUT([ora_env.sh])
-AC_OUTPUT([oracle-sysvinit-functions oracle-asm-functions oracle-dbconsole-functions])
+AC_OUTPUT([oracle-base-functions oracle-asm-functions oracle-dbconsole-functions])
 AC_OUTPUT([oracle-grid-functions oracle-listener-functions oracle-rdbms-functions oracle-restart-functions])
 AC_OUTPUT([oracle oracle-asm oracle-dbconsole])
 AC_OUTPUT([oracle-grid oracle-listener oracle-rdbms oracle-restart])
