@@ -576,6 +576,7 @@ postrm "redhat" "$action" $version
 
 %changelog
 * Fri Oct 18 2013 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.1-2   13:29:49 +0600
+- Fixed bug [ticket:#3]
 - Fixed bug [ticket:#4]
 
 * Wed Dec 26 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-22  11:46:00 +0600

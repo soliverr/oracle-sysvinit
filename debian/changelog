@@ -1,5 +1,6 @@
 oracle-sysvinit (1.1-2) stable; urgency=high
 
+  * Fixed bug [ticket:#3]
   * Fixed bug [ticket:#4]
 
  -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 18 Oct 2013 13:29:49 +0600
