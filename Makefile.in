@@ -81,7 +81,7 @@ install-docs:
 	$(INSTALL) --mode 0644 README $(DESTDIR)$(docdir)
 	$(INSTALL) --mode 0644 limits.conf $(DESTDIR)$(docdir)
 	$(INSTALL) --mode 0644 listener.ora $(DESTDIR)$(docdir)
-	$(INSTALL) --mode 0644 sqlnet.ora $(DESTDIR)$(docdir)ate  
+	$(INSTALL) --mode 0644 sqlnet.ora $(DESTDIR)$(docdir)
 	$(INSTALL) --mode 0644 tnsnames.ora $(DESTDIR)$(docdir)
 	$(INSTALL) --mode 0644 sysctl.conf $(DESTDIR)$(docdir)
 
