@@ -576,37 +576,34 @@ postrm "redhat" "$action" $version
 
 %changelog
 * Fri Oct 18 2013 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.1-2   13:29:49 +0600
-- Fixed bug [ticket:#3]
-- Fixed bug [ticket:#4]
+- New upstream release
 
 * Wed Dec 26 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-22  11:46:00 +0600
-- Fix error to get status of oracle XE instance
+- New upstream release
 
 * Wed Oct 10 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-21  10:18:14 +0600
 - Run pre-,postscripts in oracle-dbconsole as ORA_OWNER user
 
 * Fri Oct 05 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-20  12:34:17 +0600
-- New status function for oracle dbConsole (OMS)
-- Supported arguments for oracle_dbconsole_run_sqlfile
+- New upstream release
 
 * Thu Sep 13 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-19  10:47:33 +0600
-- Fixed bug with return value from while loop
+- New upstream release
 
 * Mon Sep 10 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-18  16:27:49 +0600
-- Return status from init.d scripts
-- Get status of dbConsole in force mode
+- New upstream release
 
 * Thu Aug 23 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-17  12:15:27 +0600
-- Fixed error in oracle_debug function
+- New upstream release
 
 * Tue Aug 21 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-16  16:12:06 +0600
-- Fixed error in oracle_dbconsole_prestart and oracle_dbconsole_poststart
+- New upstream release
 
 * Tue Aug 21 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-15  15:11:34 +0600
-- Fixed error in dbconsole_get_emhome function name
+- New upstream release
 
 * Tue Jul 10 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-14  12:22:05 +0600
-- Add force mode to setup ORACLE environment in dbConsole functions
+- New upstream release
 
 * Thu Jul 05 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-13  17:49:24 +0600
 - New order for start/stop init.d scripts
@@ -615,47 +612,48 @@ postrm "redhat" "$action" $version
 - Fixed errors in package scripts for Debian
 
 * Tue Jul 03 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-12.3  17:15:03 +0600
+- New upstream release
 - Fix in dbconsole startup script
 
 * Tue Jul 03 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-12.2  16:25:39 +0600
+- New upstream release
 - Another little fix in dbconsole package
 
 * Tue Jul 03 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-12.1  16:06:09 +0600
-- Little fix in dbconsole package
+- New upstream release
 
 * Mon Jul 02 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-12  13:12:19 +0600
-- Fixed bug in oracle_listener_is_oracle_restart_resource
+- New upstream release
 
 * Tue Jun 19 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-11  18:27:30 +0600
-- Fixed bug in oracle_rdbms_is_oracle_restart_resource
+- New upstream release
 
 * Tue Jun 19 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-10  16:11:09 +0600
-- oracle_orahome_patchset_version function to check PatchSets version
+- New upstream release
 
 * Fri Jun 15 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-9  17:35:39 +0600
 - Fix dependecy to initscripts
 
 * Thu Jun 14 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-8  13:12:23 +0600
-- Check whether RDBMS service is Oracle Restart Resource
-- Check whether Listener service is Oracle Restart Resource
+- New upstream release
 
 * Sat Jun 09 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-7  13:23:11 +0600
-- Fix error while removing old ORACLE_HOME from PATH
+- New upstream release
 
 * Wed May 23 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-6  13:17:58 +0600
-- More reliable way to get RDBMS ORAHOME version
+- New upstream release
 
 * Fri Apr 27 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-5  15:07:49 +0600
-- oracle_orahome_version get full version of oracle.server component
+- New upstream release
 
 * Fri Apr 27 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-4  12:24:22 +0600
-- oracle_orahome_version function is added
+- New upstream release
 
 * Thu Apr 26 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-3  18:12:23 +0600
-- Fix error in control dbConsole service
+- New upstream release
 
 * Thu Apr 26 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-2  11:14:48 +0600
-- Fix error when remove /etc/rc?.d/*ohasd files
+- New upstream release
 
 * Fri Apr 20 2012 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.0-1  12:35:02 +0600
 - Initial version for RedHat Linux.
