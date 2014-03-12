@@ -157,13 +157,17 @@ oracle_asm_dbshut() {
     dbaccess=`oracle_cfg ASM_ACCESS $sid`
     [ -z "$dbaccess" ] && dbaccess="sysasm"
 
+    # Get shutdown mode
+    [ -z "$mod" ] && mod=`oracle_cfg ASM_SHUTDOWN $sid`
+    [ -z "$mod" ] && mod="immediate"
+
     pmon=`ps -ef | grep "asm_pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" = "" ]; then
         oracle_error "ASM database $sid is not running"
         rc=$ORACLE_PASS
     elif [ -f $PFILE -o -f $SPFILE ] ; then
-        oracle_debug "$FUNCNAME: stop ASM database $sid as $dbaccess"
+        oracle_debug "$FUNCNAME: stop ASM database $sid as $dbaccess in shutdown $mod"
         $SQLDBA << EOF
 connect / as $dbaccess
 shutdown $mod

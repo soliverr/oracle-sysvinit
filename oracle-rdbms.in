@@ -85,7 +85,7 @@ __EOFF__
 oracle_rdbms() {
     local cmd=$1
     local sid=$2
-    local mode=${3:-"immediate"}
+    local mode=$3
     local stb=${4:-"none"}
     local cnt=
     local ors=

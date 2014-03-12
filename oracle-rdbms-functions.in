@@ -173,6 +173,10 @@ oracle_rdbms_dbshut() {
     dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
     [ -z "$dbaccess" ] && dbaccess="sysdba"
 
+    # Get shutdown mode
+    [ -z "$mod" ] && mod=`oracle_cfg DATABASE_SHUTDOWN $sid`
+    [ -z "$mod" ] && mod="immediate"
+
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" = "" ]; then
@@ -181,7 +185,7 @@ oracle_rdbms_dbshut() {
     elif [ -f $PFILE -o -f $SPFILE ] ; then
         case "$stb" in
             none)
-                oracle_debug "$FUNCNAME: stop normal database $sid as $dbaccess"
+                oracle_debug "$FUNCNAME: stop normal database $sid as $dbaccess in shutdown $mod"
                 $SQLDBA << EOF
 connect / as $dbaccess
 shutdown $mod
@@ -190,7 +194,7 @@ EOF
                 rc=$?
             ;;
             auto)
-                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess"
+                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess in shutdown $mod"
                 $SQLDBA << EOF
 connect / as $dbaccess
 alter database recover managed standby database cancel;
@@ -200,7 +204,7 @@ EOF
                 rc=$?
             ;;
             manual)
-                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess"
+                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess in shutdown $mod"
                 $SQLDBA << EOF
 connect / as $dbaccess
 alter database recover cancel;

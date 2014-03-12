@@ -4,6 +4,10 @@
 	  database. Added DATABASE_ACCESS and ASM_ACCESS configuration variables
 	  to control superuser role to connect to targeted instance
 
+	* Fixed bug [ticket:#16]: Configure mode to shutdown primary and standby
+	  database. Added DATABASE_SHUTDOWN and ASM_SHUTDOWN configuration
+	  variables
+
 2013-10-18  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed bug [ticket:#3]: Error in oracle_rdbms_is_oracle_restart_resource 
