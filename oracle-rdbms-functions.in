@@ -43,6 +43,7 @@ oracle_rdbms_is_oracle_restart_resource() {
 oracle_rdbms_dbstart() {
     local sid=$1
     local stb=${2:-"none"}
+    local dbaccess=
     local rc=1
     local hpfree shpfree
 
@@ -78,6 +79,10 @@ oracle_rdbms_dbstart() {
     fi
     oracle_debug "$FUNCNAME: $SQLDBA"
 
+    # Get superuser access role
+    dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
+    [ -z "$dbaccess" ] && dbaccess="sysdba"
+
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" != "" ]; then
@@ -86,18 +91,18 @@ oracle_rdbms_dbstart() {
     elif [ -f $PFILE -o -f $SPFILE ] ; then
         case "$stb" in
             none)
-                oracle_debug "$FUNCNAME: start normal database $sid"
+                oracle_debug "$FUNCNAME: start normal database $sid as $dbaccess"
                 $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 startup
 EOF
                 #FIXME: Need to parse output for errors
                 rc=$?
             ;;
             auto)
-                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode"
+                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode as $dbaccess"
                 $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 startup nomount
 alter database mount standby database;
 alter database recover managed standby database disconnect from session;
@@ -106,9 +111,9 @@ EOF
                 rc=$?
             ;;
             manual)
-                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode"
+                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode as $dbaccess"
                 $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 startup nomount
 alter database mount standby database;
 -- alter database recover automatic standby database;
@@ -137,6 +142,7 @@ oracle_rdbms_dbshut() {
     local sid=$1
     local mod=$2
     local stb=${3:-"none"}
+    local dbaccess=
     local rc=1
 
     oracle_debug "$FUNCNAME: parameters: $*"
@@ -163,6 +169,10 @@ oracle_rdbms_dbshut() {
     fi
     oracle_debug "$FUNCNAME: $SQLDBA"
 
+    # Get superuser access role
+    dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
+    [ -z "$dbaccess" ] && dbaccess="sysdba"
+
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" = "" ]; then
@@ -171,18 +181,18 @@ oracle_rdbms_dbshut() {
     elif [ -f $PFILE -o -f $SPFILE ] ; then
         case "$stb" in
             none)
-                oracle_debug "$FUNCNAME: stop normal database $sid"
+                oracle_debug "$FUNCNAME: stop normal database $sid as $dbaccess"
                 $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 shutdown $mod
 EOF
                 #FIXME: Need to parse output for errors
                 rc=$?
             ;;
             auto)
-                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode"
+                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess"
                 $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 alter database recover managed standby database cancel;
 shutdown $mod
 EOF
@@ -190,9 +200,9 @@ EOF
                 rc=$?
             ;;
             manual)
-                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode"
+                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess"
                 $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 alter database recover cancel;
 shutdown $mod
 EOF

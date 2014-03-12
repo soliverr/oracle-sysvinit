@@ -1,3 +1,9 @@
+2014-03-12  Kryazhevskikh Sergey  <soliverr@gmail.com>
+
+	* Fixed bug [ticket:#15]: Can't startup recovery for automatic standby 
+	  database. Added DATABASE_ACCESS and ASM_ACCESS configuration variables
+	  to control superuser role to connect to targeted instance
+
 2013-10-18  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed bug [ticket:#3]: Error in oracle_rdbms_is_oracle_restart_resource 

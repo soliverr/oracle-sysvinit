@@ -56,6 +56,7 @@ oracle_asm_is_oracle_restart_resource() {
 oracle_asm_dbstart() {
     local sid=$1
     local mod=$2
+    local dbaccess=
     local rc=1
     local hpfree shpfree
 
@@ -93,15 +94,19 @@ oracle_asm_dbstart() {
     fi
     oracle_debug "$FUNCNAME: $SQLDBA"
 
+    # Get superuser access role
+    dbaccess=`oracle_cfg ASM_ACCESS $sid`
+    [ -z "$dbaccess" ] && dbaccess="sysasm"
+
     pmon=`ps -ef | grep "asm_pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" != "" ]; then
         oracle_error "ASM database $sid already running"
         rc=$ORACLE_PASS
     elif [ -f $PFILE -o -f $SPFILE ] ; then
-        oracle_debug "$FUNCNAME: start ASM database $sid"
+        oracle_debug "$FUNCNAME: start ASM database $sid as $dbaccess"
         $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 startup $mod
 EOF
         #FIXME: Need to parse output for errors
@@ -121,6 +126,7 @@ EOF
 oracle_asm_dbshut() {
     local sid=$1
     local mod=$2
+    local dbaccess=
     local rc=1
 
     oracle_debug "$FUNCNAME: parameters: $*"
@@ -147,15 +153,19 @@ oracle_asm_dbshut() {
     fi
     oracle_debug "$FUNCNAME: $SQLDBA"
 
+    # Get superuser access role
+    dbaccess=`oracle_cfg ASM_ACCESS $sid`
+    [ -z "$dbaccess" ] && dbaccess="sysasm"
+
     pmon=`ps -ef | grep "asm_pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" = "" ]; then
         oracle_error "ASM database $sid is not running"
         rc=$ORACLE_PASS
     elif [ -f $PFILE -o -f $SPFILE ] ; then
-        oracle_debug "$FUNCNAME: stop ASM database $sid"
+        oracle_debug "$FUNCNAME: stop ASM database $sid as $dbaccess"
         $SQLDBA << EOF
-connect / as sysoper
+connect / as $dbaccess
 shutdown $mod
 EOF
         #FIXME: Need to parse output for errors
