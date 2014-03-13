@@ -22,8 +22,9 @@
 #
 # Usage:
 #          start | stop | status
-#          oracle   start [sid] | stop [sid] [mode] | status [sid]
+#          primary  start [sid] | stop [sid] [mode] | status [sid]
 #          standby  start [sid] [mode] | stop [sid] [mode] | status [sid]
+#          dg start [sid] | stop [sid] | status [sid]
 #
 
 source @liblsb@/oracle-rdbms-functions
@@ -40,16 +41,38 @@ echo "I: $0: `date '+%F %T'`: Run command $* " >> $SLOGFILE
 oracle_rdbms_usage() {
     cat << __EOFF__
  Usage: 
-   $0 start | stop | status
-   $0 oracle   start [sid] | stop [sid] [mode] | status [sid]
-   $0 standby  start [sid] [mode] | stop [sid] [mode] | status [sid]
- 
+
+   Start/stop database according with system configuration file:
+
+     $0 start [sid | all] 
+     $0 stop [sid | all] 
+     $0 status [sid | all]
+   
+   Try to start/stop database as PRIMARY:
+
+     $0 primary start [sid] 
+     $0 primary stop [sid] [mode]
+     $0 primary status [sid]
+
+   Try to start/stop database as PHISICAL STANDBY:
+
+     $0 standby start [sid] [mode]
+     $0 standby stop [sid] [mode]
+     $0 standby status [sid]
+   
+   Try to start/stop database with Oracle DataGuard:
+
+     $0 dg start [sid] 
+     $0 dg stop [sid]
+     $0 dg status [sid]
+
+
  Control Oracle RDBMS instances.
 
  Arguments:
-   start [sid | all]        - Start primary Oracle RDBMS with sid or all 
+   start [sid | all]        - Start Oracle RDBMS with sid or all 
                               configured and enabled instances except ASM
-   stop  [sid | all] [mode] - Stop primary Oracle RDBMS with sid or all
+   stop  [sid | all] [mode] - Stop Oracle RDBMS with sid or all
                               configured and enabled instances except ASM
                       mode  - transactional | normal | immediate | abort
                               (default is immediate)
@@ -57,7 +80,7 @@ oracle_rdbms_usage() {
    status [sid | all]       - Show status for Oracle RDBMS with sid or all
                               configured and enabled instances except ASM
 
-   oracle start [sid] | stop [sid] [mode] | status [sid]
+   primary start [sid] | stop [sid] [mode] | status [sid]
       start [sid]        - Start primary Oracle RDBMS with sid or default
       stop  [sid] [mode] - Stop primary Oracle RDBMS with sid or default
                    mode  - transactional | normal | immediate | abort
@@ -72,36 +95,40 @@ oracle_rdbms_usage() {
                    mode  - transactional | normal | immediate | abort"
                            (default is immediate)
                    sid   - ORACLE SID
+
+   dg start [sid] | stop [sid] | status [sid]
+      start [sid]        - Start Oracle RDBMS with sid or default
+      stop  [sid]        - Stop standby Oracle RDBMS with sid or default
+                   sid   - ORACLE SID
 __EOFF__
 }
 
 
 # Usage
-#  oracle_rdbms command:start|stop|status 
-#         sid
-#         mode:transactional|normal|immediate|abort (default - immediate)
-#         standby:none|manual|auto
+#  oracle_rdbms requre_role command sid mode
 #
 oracle_rdbms() {
-    local cmd=$1
-    local sid=$2
-    local mode=$3
-    local stb=${4:-"none"}
+    local role=$1
+    local cmd=$2
+    local sid=${3:-"all"}
+    local mode=$4
     local cnt=
     local ors=
     local rc=0
 
     echo "I: === oracle-rdbms $* " >> $SLOGFILE
 
+    sid=`echo $sid | tr [[:upper:]] [[:lower:]]`
+
     case "$cmd" in
       start)
-         if [ "$sid" = "all" -o "$sid" = "ALL" ] ; then
+         if [ "$sid" = "all" ] ; then
             cnt=`oracle_rdbms_sids | wc -l`
             if [ $cnt -gt 0 ] ; then
                 oracle_rdbms_sids |  { while read sid ; do
                     [ -z "$sid" ] && continue
                     echo -n "Start RDBMS Oracle $sid: " | tee -a $SLOGFILE
-                    oracle_rdbms_dbstart "$sid" "$stb" >> $SLOGFILE 2>&1
+                    oracle_rdbms_dbstart "$sid" "$role" "$mode" >> $SLOGFILE 2>&1
                     case ${PIPESTATUS[0]} in
                         $ORACLE_OKAY ) str="OK" ;;
                         $ORACLE_PASS ) str="PASS" ;;
@@ -120,7 +147,7 @@ oracle_rdbms() {
             [ -z "$sid" ] && sid=`oracle_get_default_sid`
             if [ -n "$sid" ] ; then
                 echo -n "Start given Oracle RDBMS $sid: " | tee -a $SLOGFILE
-                oracle_rdbms_dbstart "$sid" "$stb" >> $SLOGFILE 2>&1
+                oracle_rdbms_dbstart "$sid" "$role" "$mode" >> $SLOGFILE 2>&1
                 case ${PIPESTATUS[0]} in
                     $ORACLE_OKAY ) str="OK" ;;
                     $ORACLE_PASS ) str="PASS" ;;
@@ -140,7 +167,7 @@ oracle_rdbms() {
                 oracle_rdbms_sids | { while read sid ; do
                     [ -z "$sid" ] && continue
                     echo -n "Stop Oracle RDBMS $sid: " | tee -a $SLOGFILE
-                    oracle_rdbms_dbshut "$sid" "$mode" "$stb" >> $SLOGFILE 2>&1
+                    oracle_rdbms_dbshut "$sid" "$role" "$mode" >> $SLOGFILE 2>&1
                     case ${PIPESTATUS[0]} in
                         $ORACLE_OKAY ) str="OK" ;;
                         $ORACLE_PASS ) str="PASS" ;;
@@ -159,7 +186,7 @@ oracle_rdbms() {
              [ -z "$sid" ] && sid=`oracle_get_default_sid`
              if [ -n "$sid" ] ; then
                 echo -n "Stop given Oracle RDBMS $sid: " | tee -a $SLOGFILE
-                oracle_rdbms_dbshut "$sid" "$mode" "$stb" >> $SLOGFILE 2>&1
+                oracle_rdbms_dbshut "$sid" "$role" "$mode" >> $SLOGFILE 2>&1
                 case ${PIPESTATUS[0]} in
                     $ORACLE_OKAY ) str="OK" ;;
                     $ORACLE_PASS ) str="PASS" ;;
@@ -262,10 +289,34 @@ oracle_rdbms_standby() {
     return $rc
 }
 
+oracle_rdbms_check_role() {
+    local role=`echo $1 | tr [[:upper:]] [[:lower:]]`
+
+    case "$role" in
+        primary ) return 0 ;;
+        'physical standby') return 0 ;;
+        none ) return 0 ;;
+    esac
+
+    return 1;
+}
+
 case "$1" in
-    start)
-        case "$(oracle_cfg DATABASE_ROLE)" in
-            PRIMARY|primary) oracle_rdbms $@ all; rc=$? ;;
+    start|stop)
+        oracle_rdbms "" "$@"
+        ;;
+    primary|standby|dg )
+        oracle_rdbms "$@"
+        ;;
+    *)
+        oracle_rdbms_usage
+        rc=$ORACLE_ERROR
+        ;;
+esac
+
+
+
+        PRIMARY|primary) oracle_rdbms $@ all; rc=$? ;;
             'PHYSICAL STANDBY'|'physical standby') oracle_rdbms_standby start "" all; rc=$? ;;
             '') echo "You can set Oracle RDBMS role in '@confdir@/oracle'" | tee -a $SLOGFILE
                 echo "(default PRIMARY)" | tee -a $SLOGFILE

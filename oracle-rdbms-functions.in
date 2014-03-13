@@ -38,11 +38,12 @@ oracle_rdbms_is_oracle_restart_resource() {
 }
 
 # Start Oracle RDBMS instance
-#   oracle_rdbms_dbstart sid [standby_mode:auto|manual|none]
+#   oracle_rdbms_dbstart sid role mode
 #
 oracle_rdbms_dbstart() {
     local sid=$1
-    local stb=${2:-"none"}
+    local role=$2
+    local mode=$3
     local dbaccess=
     local rc=1
     local hpfree shpfree
@@ -82,47 +83,110 @@ oracle_rdbms_dbstart() {
     # Get superuser access role
     dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
     [ -z "$dbaccess" ] && dbaccess="sysdba"
+    dbaccess=`echo $dbaccess | tr [[:upper:]] [[:lower:]]`
 
+    # Get database role
+    [ -z "$role" ] && role=`oracle_cfg DATABASE_ROLE`
+    role=`echo $role | tr [[:upper:]] [[:lower:]]`
+
+    # Get startup mode
+    [ -z "$mode" ] && mode=`oracle_cfg DATABASE_STARTUP`
+    mode=`echo $mode | tr [[:upper:]] [[:lower:]]`
+
+    # Check instance existance
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
+    
     oracle_debug "$FUNCNAME: pmon: $pmon"
+
     if [ "$pmon" != "" ]; then
         oracle_error "Database $sid already running"
         rc=$ORACLE_PASS
     elif [ -f $PFILE -o -f $SPFILE ] ; then
-        case "$stb" in
+        case "$role" in
             none)
-                oracle_debug "$FUNCNAME: start normal database $sid as $dbaccess"
+                oracle_debug  "$FUNCNAME: skip start database $sid due to role $role"
+                rc=$ORACLE_PASS
+            ;;
+            
+            dg)
+                oracle_debug "$FUNCNAME: startup database '$sid' with Oracle DataGuard. connect as '$dbaccess'"
                 $SQLDBA << EOF
 connect / as $dbaccess
 startup
 EOF
-                #FIXME: Need to parse output for errors
                 rc=$?
             ;;
-            auto)
-                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode as $dbaccess"
+            
+            primary)
+                case "$mode" in
+                    mount )
+                        oracle_debug "$FUNCNAME: startup '$role' database '$sid' in '$mode' mode. connect as '$dbaccess'"
+                        $SQLDBA << EOF
+connect / as $dbaccess
+startup mount
+EOF
+                        rc=$?
+                    ;;
+                    read-only )
+                        oracle_debug "$FUNCNAME: startup '$role' database '$sid' in '$mode' mode. connect as '$dbaccess'"
+                        $SQLDBA << EOF
+connect / as $dbaccess
+startup mount
+alter database open read only;
+EOF
+                        rc=$?
+                    ;;
+                    * )
+                        oracle_debug "$FUNCNAME: start '$role' database $sid. connect as $dbaccess"
+                $SQLDBA << EOF
+connect / as $dbaccess
+startup
+EOF
+                        rc=$?
+                    ;;
+                esac
+            ;;
+
+            'physical standby')
+                case "$mode" in
+                    mount|manual )
+                        oracle_debug "$FUNCNAME: startup '$role' database '$sid' in '$mode' mode. connect as '$dbaccess'"
+                        $SQLDBA << EOF
+connect / as $dbaccess
+startup nomount
+alter database mount standby database;
+EOF
+                        rc=$?
+                    ;;
+                    read-only )
+                        oracle_debug "$FUNCNAME: startup '$role' database '$sid' in '$mode' mode. connect as '$dbaccess'"
+                        $SQLDBA << EOF
+connect / as $dbaccess
+startup nomount
+alter database mount standby database;
+alter database open read only;
+EOF
+                        rc=$?
+                    ;;
+                    auto )
+                        oracle_debug "$FUNCNAME: start '$role' database $sid. connect as $dbaccess"
                 $SQLDBA << EOF
 connect / as $dbaccess
 startup nomount
 alter database mount standby database;
 alter database recover managed standby database disconnect from session;
 EOF
-                #FIXME: Need to parse output for errors
-                rc=$?
+                        rc=$?
+                        ;;
+                    *)
+                        oracle_error "Unsupported mode '$mode' for '$role' database $sid"
+                        rc=$ORACLE_ERROR
+                    ;;
+                    esac
             ;;
-            manual)
-                oracle_debug "$FUNCNAME: start standby database $sid in $stb mode as $dbaccess"
-                $SQLDBA << EOF
-connect / as $dbaccess
-startup nomount
-alter database mount standby database;
--- alter database recover automatic standby database;
-EOF
-                #FIXME: Need to parse output for errors
-                rc=$?
-            ;;
+                
             *)
-                oracle_error "Unsupported standby mode '$stb' for database $sid"
+                oracle_error "Unsupported role '$role' for database $sid"
                 rc=$ORACLE_ERROR
             ;;
         esac
