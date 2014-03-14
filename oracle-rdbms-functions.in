@@ -88,6 +88,7 @@ oracle_rdbms_dbstart() {
     # Get database role
     [ -z "$role" ] && role=`oracle_cfg DATABASE_ROLE $sid`
     role=`echo $role | tr [[:upper:]] [[:lower:]]`
+    [ -z "$role" ] && role="primary"
 
     # Get startup mode
     [ -z "$mode" ] && mode=`oracle_cfg DATABASE_STARTUP $sid`
@@ -242,6 +243,7 @@ oracle_rdbms_dbshut() {
     # Get database role
     [ -z "$role" ] && role=`oracle_cfg DATABASE_ROLE $sid`
     role=`echo $role | tr [[:upper:]] [[:lower:]]`
+    [ -z "$role" ] && role="primary"
 
     # Get shutdown mode
     [ -z "$mode" ] && mode=`oracle_cfg DATABASE_SHUTDOWN $sid`
