@@ -1,3 +1,9 @@
+oracle-sysvinit (1.2-1) stable; urgency=low
+
+  * New upstream release. See ChangeLog for details.
+
+ -- Kryazhevskikh Sergey <soliverr@gmail.com>  Fri, 14 Mar 2014 12:20:22 +0600
+
 oracle-sysvinit (1.1-2) stable; urgency=high
 
   * New upstream release

@@ -86,11 +86,11 @@ oracle_rdbms_dbstart() {
     dbaccess=`echo $dbaccess | tr [[:upper:]] [[:lower:]]`
 
     # Get database role
-    [ -z "$role" ] && role=`oracle_cfg DATABASE_ROLE`
+    [ -z "$role" ] && role=`oracle_cfg DATABASE_ROLE $sid`
     role=`echo $role | tr [[:upper:]] [[:lower:]]`
 
     # Get startup mode
-    [ -z "$mode" ] && mode=`oracle_cfg DATABASE_STARTUP`
+    [ -z "$mode" ] && mode=`oracle_cfg DATABASE_STARTUP $sid`
     mode=`echo $mode | tr [[:upper:]] [[:lower:]]`
 
     # Check instance existance
@@ -104,7 +104,7 @@ oracle_rdbms_dbstart() {
     elif [ -f $PFILE -o -f $SPFILE ] ; then
         case "$role" in
             none)
-                oracle_debug  "$FUNCNAME: skip start database $sid due to role $role"
+                oracle_debug  "$FUNCNAME: skip start database '$sid' due to role '$role'"
                 rc=$ORACLE_PASS
             ;;
             
@@ -182,7 +182,7 @@ EOF
                         oracle_error "Unsupported mode '$mode' for '$role' database $sid"
                         rc=$ORACLE_ERROR
                     ;;
-                    esac
+                esac
             ;;
                 
             *)
@@ -200,12 +200,13 @@ EOF
 }
 
 # Stop Oracle RDBMS instance
-#   oracle_rdbms_dbshut sid mode [standby_mode:auto|manual|none]
+#   oracle_rdbms_dbshut sid role mode
 #
 oracle_rdbms_dbshut() {
     local sid=$1
-    local mod=$2
-    local stb=${3:-"none"}
+    local role=$2
+    local mode=$3
+    local stb=
     local dbaccess=
     local rc=1
 
@@ -236,10 +237,22 @@ oracle_rdbms_dbshut() {
     # Get superuser access role
     dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
     [ -z "$dbaccess" ] && dbaccess="sysdba"
+    dbaccess=`echo $dbaccess | tr [[:upper:]] [[:lower:]]`
+
+    # Get database role
+    [ -z "$role" ] && role=`oracle_cfg DATABASE_ROLE $sid`
+    role=`echo $role | tr [[:upper:]] [[:lower:]]`
 
     # Get shutdown mode
-    [ -z "$mod" ] && mod=`oracle_cfg DATABASE_SHUTDOWN $sid`
-    [ -z "$mod" ] && mod="immediate"
+    [ -z "$mode" ] && mode=`oracle_cfg DATABASE_SHUTDOWN $sid`
+    mode=`echo $mode | tr [[:upper:]] [[:lower:]]`
+    [ -z "$mode" ] && mode="immediate"
+
+    # Get standby startup mode
+    if [ "$role" = "physical standby" ] ; then
+        stb=`oracle_cfg DATABASE_STARTUP $sid`
+        stb=`echo $stb | tr [[:upper:]] [[:lower:]]`
+    fi
 
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
@@ -247,38 +260,82 @@ oracle_rdbms_dbshut() {
         oracle_error "Database $sid is not running"
         rc=$ORACLE_PASS
     elif [ -f $PFILE -o -f $SPFILE ] ; then
-        case "$stb" in
+        case "$role" in
             none)
-                oracle_debug "$FUNCNAME: stop normal database $sid as $dbaccess in shutdown $mod"
+                oracle_debug  "$FUNCNAME: skip shutdown database '$sid' due to role '$role'"
+                rc=$ORACLE_PASS
+            ;;
+            
+            dg)
+                oracle_debug "$FUNCNAME: shutdown database '$sid' with Oracle DataGuard. connect as '$dbaccess'"
                 $SQLDBA << EOF
 connect / as $dbaccess
-shutdown $mod
+shutdown
 EOF
-                #FIXME: Need to parse output for errors
                 rc=$?
             ;;
-            auto)
-                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess in shutdown $mod"
-                $SQLDBA << EOF
+            
+            primary)
+                case "$mode" in
+                    transactional | normal | immediate | abort )
+                        oracle_debug "$FUNCNAME: shutdown '$role' database '$sid' in mode '$mode'. connect as '$dbaccess'"
+                        $SQLDBA << EOF
 connect / as $dbaccess
-alter database recover managed standby database cancel;
-shutdown $mod
+shutdown $mode
 EOF
-                #FIXME: Need to parse output for errors
-                rc=$?
+                        rc=$?
+                    ;;
+                    *)
+                        oracle_error "Unsupported shutdown mode '$mode' for database $sid"
+                        rc=$ORACLE_ERROR
+                    ;;
+                esac
             ;;
-            manual)
-                oracle_debug "$FUNCNAME: stop standby database $sid in $stb mode as $dbaccess in shutdown $mod"
-                $SQLDBA << EOF
+
+            'physical standby')
+                case "$mode" in
+                    transactional | normal | immediate | abort )
+                        oracle_debug "$FUNCNAME: shutdown '$role' database '$sid' in mode '$mode', started as '$stb'. connect as '$dbaccess'"
+                        case "$stb" in
+                            mount|manual )
+                                $SQLDBA << EOF
 connect / as $dbaccess
 alter database recover cancel;
-shutdown $mod
+shutdown $mode
 EOF
-                #FIXME: Need to parse output for errors
-                rc=$?
+                                rc=$?
+                            ;;
+                            read-only )
+                                $SQLDBA << EOF
+connect / as $dbaccess
+shutdown $mode
+EOF
+                                rc=$?
+                            ;;
+                            auto )
+                                $SQLDBA << EOF
+connect / as $dbaccess
+alter database recover managed standby database cancel;
+shutdown $mode
+EOF
+                                rc=$?
+                            ;;
+                            *)
+                                oracle_error "Unsupported startup mode '$stb' for '$role' database $sid"
+                                rc=$ORACLE_ERROR
+                            ;;
+                        esac
+                    ;;
+
+                    *)
+                        oracle_error "Unsupported shutdown mode '$mode' for database $sid"
+                        rc=$ORACLE_ERROR
+                    ;;
+                esac
             ;;
+
             *)
-                oracle_error "Unsupported standby mode '$stb' for database $sid"
+                oracle_error "Unsupported role '$role' for database $sid"
                 rc=$ORACLE_ERROR
             ;;
         esac

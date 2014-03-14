@@ -1,3 +1,11 @@
+2014-03-14  Kryazhevskikh  <kryazhevskikh@kryazhevskikh-sv>
+
+	* Fixed bug [ticket:#14]: Configure startup mode for database.
+	  Added DATABAS_STARTUP configuration variable
+
+	* Fixed wishlist [ticket:#17]: Add support for Dataguard Broker.
+	  New value 'DG' for DATABASE_ROLE variable.
+
 2014-03-12  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed bug [ticket:#15]: Can't startup recovery for automatic standby 

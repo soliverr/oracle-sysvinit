@@ -263,46 +263,8 @@ oracle_rdbms() {
     return $rc
 }
 
-# Usage
-#  oracle_rdbms_standby start [mode] [sid]
-#          stop [sid] [mode]
-#          status [sid]
-oracle_rdbms_standby() {
-    local cmd=$1
-    local rc
-
-    case "$1" in
-      start) local stb=${2:-"manual"}
-             local sid=$3
-             oracle_rdbms start "$sid" "" "$stb"
-             rc=$?
-      ;;
-      stop)  local sid=$2
-             local stb=${3:-"manual"}
-             oracle_rdbms stop "$sid" "" "$stb"
-             rc=$?
-      ;;
-      *) oracle_rdbms $@
-         rc=$?
-    esac
-
-    return $rc
-}
-
-oracle_rdbms_check_role() {
-    local role=`echo $1 | tr [[:upper:]] [[:lower:]]`
-
-    case "$role" in
-        primary ) return 0 ;;
-        'physical standby') return 0 ;;
-        none ) return 0 ;;
-    esac
-
-    return 1;
-}
-
 case "$1" in
-    start|stop)
+    start|stop|status)
         oracle_rdbms "" "$@"
         ;;
     primary|standby|dg )
@@ -312,72 +274,6 @@ case "$1" in
         oracle_rdbms_usage
         rc=$ORACLE_ERROR
         ;;
-esac
-
-
-
-        PRIMARY|primary) oracle_rdbms $@ all; rc=$? ;;
-            'PHYSICAL STANDBY'|'physical standby') oracle_rdbms_standby start "" all; rc=$? ;;
-            '') echo "You can set Oracle RDBMS role in '@confdir@/oracle'" | tee -a $SLOGFILE
-                echo "(default PRIMARY)" | tee -a $SLOGFILE
-                oracle_rdbms $@ all
-                rc=$?
-            ;;
-            NONE|none)
-            ;;
-            *) echo "Oracle RDBMS role is not supported [`oracle_cfg DATABASE_ROLE`]"
-               rc=$ORACLE_ERROR
-            ;;
-        esac
-    ;;
-    stop)
-        case "$(oracle_cfg DATABASE_ROLE)" in
-            PRIMARY|primary) oracle_rdbms $@ all; rc=$? ;;
-            'PHYSICAL STANDBY'|'physical standby') oracle_rdbms_standby "$@"; rc=$? ;;
-            '') echo "You can set Oracle RDBMS role in '@confdir@/oracle'" | tee -a $SLOGFILE
-                echo "(default PRIMARY)" | tee -a $SLOGFILE
-                oracle_rdbms "$@" all
-                rc=$?
-            ;;
-            NONE|none)
-            ;;
-            *) echo "Oracle RDBMS role is not supported [`oracle_cfg DATABASE_ROLE`]" | tee -a $SLOGFILE
-               rc=$ORACLE_ERROR
-            ;;
-        esac
-    ;;
-    status)
-        oracle_rdbms "$@" all
-        rc=$?
-    ;;
-    oracle|standby)
-        req_role="$1"
-        db_role="$(oracle_cfg DATABASE_ROLE | tr [[:upper:]] [[:lower:]])"
-        [ -z "$db_role" ] && db_role="primary"
-
-        if [ "$req_role" = "oracle" -a "$db_role" != "primary" ] \
-           || [ "$req_role" = "standby" -a "$db_role" = "primary" ]; then
-              echo "Given Oracle RDBMS role in '@confdir@/oracle':  $db_role" | tee -a $SLOGFILE
-              echo "But required role: $req_role" | tee -a $SLOGFILE
-              rc=$ORACLE_ERROR
-        else
-            shift
-            case "$db_role" in
-                PRIMARY|primary) oracle_rdbms "$@"; rc=$? ;;
-                'PHYSICAL STANDBY'|'physical standby') oracle_rdbms_standby "$@"; rc=$? ;;
-                NONE|none) ;;
-                *) echo "Oracle RDBMS role is not supported [$db_role]" | tee -a $SLOGFILE
-                   rc=$ORACLE_ERROR
-                ;;
-            esac
-        fi
-    ;;
-    help)
-        oracle_rdbms_usage
-    ;;
-    *)
-        oracle_rdbms_usage
-        rc=$ORACLE_ERROR
 esac
 
 echo >> $SLOGFILE
