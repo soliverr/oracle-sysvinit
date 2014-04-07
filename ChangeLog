@@ -1,4 +1,4 @@
-2014-03-14  Kryazhevskikh  <kryazhevskikh@kryazhevskikh-sv>
+2014-03-14  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed bug [ticket:#14]: Configure startup mode for database.
 	  Added DATABAS_STARTUP configuration variable
