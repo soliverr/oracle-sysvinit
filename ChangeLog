@@ -1,3 +1,7 @@
+2014-10-09  Kryazhevskikh Sergey  <soliverr@gmail.com>
+
+	* Fixed GitHub bug #19: Error setting Oracle environment variables
+
 2014-03-14  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed bug [ticket:#14]: Configure startup mode for database.
