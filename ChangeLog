@@ -1,3 +1,8 @@
+2014-12-09  Kryazhevskikhi Sergey  <soliverr@gmail.com>
+
+	* Fixed GitHub bug #20: Start/Stop rdbms instance in Dataguard mode
+	  by `dgmgrl' command
+
 2014-10-09  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed GitHub bug #19: Error setting Oracle environment variables
@@ -8,7 +13,7 @@
 	  Added DATABAS_STARTUP configuration variable
 
 	* Fixed wishlist [ticket:#17]: Add support for Dataguard Broker.
-	  New value 'DG' for DATABASE_ROLE variable.
+	  New value 'DG' for DATABASE_ROLE variable
 
 2014-03-12  Kryazhevskikh Sergey  <soliverr@gmail.com>
 

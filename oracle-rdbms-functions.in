@@ -73,13 +73,6 @@ oracle_rdbms_dbstart() {
     SPFILE=${ORACLE_HOME}/dbs/spfile${ORACLE_SID}.ora
     oracle_debug "$FUNCNAME: SPFILE=$SPFILE"
 
-    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
-        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
-    else
-        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
-    fi
-    oracle_debug "$FUNCNAME: $SQLDBA"
-
     # Get superuser access role
     dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
     [ -z "$dbaccess" ] && dbaccess="sysdba"
@@ -93,6 +86,23 @@ oracle_rdbms_dbstart() {
     # Get startup mode
     [ -z "$mode" ] && mode=`oracle_cfg DATABASE_STARTUP $sid`
     mode=`echo $mode | tr [[:upper:]] [[:lower:]]`
+
+    # Create command
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        if [ "$role" = "dg" ] ; then
+            SQLDBA="${ORACLE_HOME}/bin/dgmgrl"
+        else
+            SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
+        fi
+    else
+        if [ "$role" = "dg" ] ; then
+            SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/dgmgrl\""
+        else
+            SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
+        fi
+    fi
+    oracle_debug "$FUNCNAME: $SQLDBA"
+
 
     # Check instance existance
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
@@ -112,7 +122,7 @@ oracle_rdbms_dbstart() {
             dg)
                 oracle_debug "$FUNCNAME: startup database '$sid' with Oracle DataGuard. connect as '$dbaccess'"
                 $SQLDBA << EOF
-connect / as $dbaccess
+connect /
 startup
 EOF
                 rc=$?
@@ -228,13 +238,6 @@ oracle_rdbms_dbshut() {
     SPFILE=${ORACLE_HOME}/dbs/spfile${ORACLE_SID}.ora
     oracle_debug "$FUNCNAME: SPFILE=$SPFILE"
 
-    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
-        SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
-    else
-        SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
-    fi
-    oracle_debug "$FUNCNAME: $SQLDBA"
-
     # Get superuser access role
     dbaccess=`oracle_cfg DATABASE_ACCESS $sid`
     [ -z "$dbaccess" ] && dbaccess="sysdba"
@@ -256,6 +259,22 @@ oracle_rdbms_dbshut() {
         stb=`echo $stb | tr [[:upper:]] [[:lower:]]`
     fi
 
+    # Create command
+    if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
+        if [ "$role" = "dg" ] ; then
+            SQLDBA="${ORACLE_HOME}/bin/dgmgrl"
+        else
+            SQLDBA="${ORACLE_HOME}/bin/sqlplus -R 3 /nolog"
+        fi
+    else
+        if [ "$role" = "dg" ] ; then
+            SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/dgmgrl\""
+        else
+            SQLDBA="eval su $ORA_OWNER --preserve-environment --command \"${ORACLE_HOME}/bin/sqlplus -R 3 /nolog\""
+        fi
+    fi
+    oracle_debug "$FUNCNAME: $SQLDBA"
+
     pmon=`ps -ef | grep "pmon_$ORACLE_SID" | grep -v grep`
     oracle_debug "$FUNCNAME: pmon: $pmon"
     if [ "$pmon" = "" ]; then
@@ -271,8 +290,8 @@ oracle_rdbms_dbshut() {
             dg)
                 oracle_debug "$FUNCNAME: shutdown database '$sid' with Oracle DataGuard. connect as '$dbaccess'"
                 $SQLDBA << EOF
-connect / as $dbaccess
-shutdown
+connect / 
+shutdown $mode
 EOF
                 rc=$?
             ;;
