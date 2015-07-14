@@ -3,8 +3,13 @@ oracle-sysvinit
 
 Control Oracle services in common Linux way through /etc/init.d
 
+Source is hosted on GitHub: https://github.com/soliverr/oracle-sysvinit
 
-Project is hosted on SourceForge: http://sourceforge.net/projects/oracledba
+Public resources:
+
+* SourceForge: http://sourceforge.net/projects/oracledba
+* openSUSE Build Service: https://build.opensuse.org/project/show/home:soliverr
+* LaunchPad: https://launchpad.net/~soliverr/+archive/ubuntu/ppa
 
  -- Sergey Kryazhevskikh <soliverr@gmail.com>
 

@@ -249,15 +249,40 @@ oracle_env() {
         NLS_TIMESTAMP_TZ_FORMAT="$nls"
     fi
 
+    # Set ORACLE_BASE
+    nls=`oracle_cfg ORACLE_BASE $sid`
+    oracle_debug "$FUNCNAME: oracle_base=$nls"
+    if [ -n "$nls" ] ; then
+        ORACLE_BASE="$nls"
+    fi
+
+    # Set ORACLE_UNQNAME
+    nls=`oracle_cfg ORACLE_UNQNAME $sid`
+    oracle_debug "$FUNCNAME: oracle_unqname=$nls"
+    if [ -n "$nls" ] ; then
+        ORACLE_UNQNAME="$nls"
+    fi
+
+    # Set TZ
+    nls=`oracle_cfg TZ $sid`
+    oracle_debug "$FUNCNAME: tz=$nls"
+    if [ -n "$nls" ] ; then
+        TZ="$nls"
+    fi
+
+
     if [ $DEBUG -gt 0 ] ; then 
         echo "oracle_env(): ORACLE_SID              = $ORACLE_SID" >&2
         echo "oracle_env(): ORACLE_HOME             = $ORACLE_HOME" >&2
+        echo "oracle_env(): ORACLE_BASE             = $ORACLE_BASE" >&2
+        echo "oracle_env(): ORACLE_UNQNAME          = $ORACLE_UNQNAME" >&2
         echo "oracle_env(): TNS_ADMIN               = $TNS_ADMIN" >&2
         echo "oracle_env(): NLS_LANG                = $NLS_LANG" >&2
         echo "oracle_env(): NLS_DATE_FORMAT         = $NLS_DATE_FORMAT" >&2
         echo "oracle_env(): NLS_TIMESTAMP_FORMAT    = $NLS_TIMESTAMP_FORMAT" >&2
         echo "oracle_env(): NLS_TIMESTAMP_TZ_FORMAT = $NLS_TIMESTAMP_TZ_FORMAT" >&2
         echo "oracle_env(): PATH                    = $PATH" >&2
+        echo "oracle_env(): TZ                      = $TZ" >&2
     fi
 
     export ORACLE_SID ORACLE_HOME PATH
@@ -278,6 +303,24 @@ oracle_env() {
         export NLS_DATE_FORMAT
     else
         unset NLS_DATE_FORMAT
+    fi
+
+    if [ -n "$ORACLE_BASE" ] ; then 
+        export ORACLE_BASE
+    else
+        unset ORACLE_BASE
+    fi
+
+    if [ -n "$ORACLE_UNQNAME" ] ; then 
+        export ORACLE_UNQNAME
+    else
+        unset ORACLE_UNQNAME
+    fi
+
+    if [ -n "$TZ" ] ; then 
+        export TZ
+    else
+        unset TZ
     fi
 }
 

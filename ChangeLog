@@ -1,4 +1,10 @@
-2014-12-09  Kryazhevskikhi Sergey  <soliverr@gmail.com>
+2015-07-14  Kryazhevskikh Sergey  <soliverr@gmail.com>
+
+	* Fixed GitHub #21: Add ORACLE_BASE environment variable
+	* Fixed GitHub #24: Add ORACLE_UNQNAME environment variable
+	* Fixed GitHub #25: Add TZ environment variable
+
+2014-12-09  Kryazhevskikh Sergey  <soliverr@gmail.com>
 
 	* Fixed GitHub bug #20: Start/Stop rdbms instance in Dataguard mode
 	  by `dgmgrl' command
