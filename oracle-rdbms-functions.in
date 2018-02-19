@@ -45,6 +45,7 @@ oracle_rdbms_dbstart() {
     local role=$2
     local mode=$3
     local dbaccess=
+    local pdbs=
     local rc=1
     local hpfree shpfree
 
@@ -86,6 +87,9 @@ oracle_rdbms_dbstart() {
     # Get startup mode
     [ -z "$mode" ] && mode=`oracle_cfg DATABASE_STARTUP $sid`
     mode=`echo $mode | tr [[:upper:]] [[:lower:]]`
+
+    # Get list of pluggable databases
+    pdbs=`oracle_cfg DATABASE_PDBS $sid`
 
     # Create command
     if [ "$(id -nu 2>/dev/null)" = "$ORA_OWNER" ] ; then
@@ -152,6 +156,11 @@ EOF
                 $SQLDBA << EOF
 connect / as $dbaccess
 startup
+`if [ -n "$pdbs" ] ; then
+for i in $pdbs ; do
+    echo "alter pluggable database $i open;"
+done
+fi`
 EOF
                         rc=$?
                     ;;

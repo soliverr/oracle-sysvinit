@@ -1,7 +1,7 @@
 Summary   : Start/stop Oracle services.
 Summary(ru_RU.UTF-8): Скрипты пуска/останова сервисов Oracle.
 Name      : oracle-sysvinit
-Version   : 1.4
+Version   : 1.5
 Release   : 1
 Group     : System Environment
 
@@ -575,6 +575,9 @@ postrm "redhat" "$action" $version
 
 
 %changelog
+* Mon Feb 19 2017 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.5-1   13:56:37 +0500
+- New upstream release. See ChangeLog for details.
+
 * Tue Jul 14 2015 Kryazhevskikh Sergey <soliverr@gmail.com> - 1.4-1   11:14:59 +0500
 - New upstream release. See ChangeLog for details.
 

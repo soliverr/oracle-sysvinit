@@ -3,7 +3,7 @@ dnl $Id$
 dnl
 
 AC_PREREQ(2.61)
-AC_INIT(oracle-sysvinit, 1.4, soliverr@gmail.com)
+AC_INIT(oracle-sysvinit, 1.5, soliverr@gmail.com)
 
 dnl Define variable localstatedir
 dnl localstatedir='/var'
