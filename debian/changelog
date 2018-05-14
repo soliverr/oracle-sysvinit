@@ -1,3 +1,9 @@
+oracle-sysvinit (1.5-2) stable; urgency=low
+
+  * No initscripts package since Artful.
+
+ -- Kryazhevskikh Sergey <soliverr@gmail.com>  Mon, 14 May 2018 09:50:44 +0500
+
 oracle-sysvinit (1.5-1) stable; urgency=low
 
   * New upstream release. See ChangeLog for details.

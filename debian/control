@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: oracle-sysvinit
 Architecture: all
-Depends: initscripts
+Depends: initscripts | lsb-base
 Description: Start/stop Oracle services.
  Control Oracle services in common Linux way through 
  sysvinit.
